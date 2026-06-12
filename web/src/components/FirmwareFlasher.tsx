@@ -20,6 +20,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
   const [isFlashing, setIsFlashing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
+  const [eraseAll, setEraseAll] = useState(false);
 
   // Helper to add logs
   const logMsg = (msg: string) => {
@@ -111,7 +112,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
         flashSize: 'keep',
         flashMode: 'keep',
         flashFreq: 'keep',
-        eraseAll: false,
+        eraseAll: eraseAll,
         compress: true,
         reportProgress: (_fileIndex: number, written: number, total: number) => {
           const percentage = Math.round((written / total) * 100);
@@ -181,7 +182,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
         flashSize: 'keep',
         flashMode: 'keep',
         flashFreq: 'keep',
-        eraseAll: false,
+        eraseAll: eraseAll,
         compress: true,
         reportProgress: (_fileIndex: number, written: number, total: number) => {
           const percentage = Math.round((written / total) * 100);
@@ -270,6 +271,15 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Firmware (0x10000) - Required</label>
                   <input type="file" accept=".bin" onChange={(e) => setFirmwareFile(e.target.files?.[0] || null)} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                  <input 
+                    type="checkbox" 
+                    id="eraseAll" 
+                    checked={eraseAll}
+                    onChange={(e) => setEraseAll(e.target.checked)} 
+                  />
+                  <label htmlFor="eraseAll" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Erase all flash before writing (Wipes WiFi settings)</label>
                 </div>
                 
                 <button 
