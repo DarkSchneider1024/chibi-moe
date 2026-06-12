@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { X, BookOpen } from 'lucide-react';
-import firmwareDoc from '../../../../docs/firmware.md?raw';
-import architectureDoc from '../../../../docs/architecture.md?raw';
+import firmwareDoc from '../../../docs/firmware.md?raw';
+import architectureDoc from '../../../docs/architecture.md?raw';
 
 interface ManualModalProps {
   isOpen: boolean;
