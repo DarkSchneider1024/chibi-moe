@@ -1,0 +1,7 @@
+{
+  "wifi_ssid": "Your_WiFi_Name",
+  "wifi_password": "Your_WiFi_Password",
+  "websocket_host": "chibi.carrot-atelier.online",
+  "websocket_port": 443,
+  "websocket_path": "/"
+}
