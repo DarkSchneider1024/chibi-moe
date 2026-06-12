@@ -88,7 +88,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       if (bootloaderFile) {
         fileArray.push({
           data: new Uint8Array(await readFileAsArrayBuffer(bootloaderFile)),
-          address: 0x1000
+          address: 0x0
         });
       }
       if (partitionsFile) {
@@ -162,7 +162,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
 
       const fileArray = [];
       if (bootloaderAsset) {
-        fileArray.push({ data: new Uint8Array(await downloadFile(bootloaderAsset.browser_download_url, 'bootloader')), address: 0x1000 });
+        fileArray.push({ data: new Uint8Array(await downloadFile(bootloaderAsset.browser_download_url, 'bootloader')), address: 0x0 });
       }
       if (partitionsAsset) {
         fileArray.push({ data: new Uint8Array(await downloadFile(partitionsAsset.browser_download_url, 'partitions')), address: 0x8000 });
@@ -256,7 +256,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
             {isAdvancedMode && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', marginTop: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Bootloader (0x1000) - Optional</label>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Bootloader (0x0) - Optional</label>
                   <input type="file" accept=".bin" onChange={(e) => setBootloaderFile(e.target.files?.[0] || null)} />
                 </div>
                 <div>
