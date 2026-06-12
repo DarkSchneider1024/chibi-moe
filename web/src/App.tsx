@@ -6,9 +6,11 @@ import { SettingsModal } from './components/SettingsModal';
 import { RobotAvatar } from './components/RobotAvatar';
 import { ControlPanel } from './components/ControlPanel';
 import { ChatLog, ChatMessage } from './components/ChatLog';
+import { FirmwareFlasher } from './components/FirmwareFlasher';
 
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFlasherOpen, setIsFlasherOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
 
@@ -97,12 +99,18 @@ export default function App() {
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenFirmwareFlasher={() => setIsFlasherOpen(true)}
       />
 
       <SettingsModal 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
         onSave={handleSaveSettings} 
+      />
+
+      <FirmwareFlasher 
+        isOpen={isFlasherOpen}
+        onClose={() => setIsFlasherOpen(false)}
       />
     </div>
   );
