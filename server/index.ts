@@ -138,7 +138,7 @@ wss.on('connection', (ws) => {
             const response = await ai.models.generateContent({
               model: 'gemini-1.5-flash',
               contents: state.history,
-              tools: state.enableMachineOps ? robotTools : undefined
+              config: { tools: state.enableMachineOps ? robotTools : undefined }
             });
 
             let replyText = response.text || '';
@@ -182,7 +182,7 @@ wss.on('connection', (ws) => {
               const finalResponse = await ai.models.generateContent({
                 model: 'gemini-1.5-flash',
                 contents: state.history,
-                tools: state.enableMachineOps ? robotTools : undefined
+                config: { tools: state.enableMachineOps ? robotTools : undefined }
               });
 
               replyText = finalResponse.text || '';
