@@ -154,8 +154,14 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       
       const downloadFile = async (url: string, name: string) => {
         logMsg(`Downloading ${name}...`);
-        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-        const res = await fetch(corsProxyUrl);
+        
+        // We use our own Node.js backend to proxy the download because public CORS proxies 
+        // like corsproxy.io get blocked by GitHub's Cloudflare protections for binary files.
+        const backendUrl = localStorage.getItem('backendUrl') || 'ws://localhost:3001';
+        const httpBackendUrl = backendUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+        const proxyUrl = `${httpBackendUrl}/proxy?url=${encodeURIComponent(url)}`;
+        
+        const res = await fetch(proxyUrl);
         if (!res.ok) throw new Error(`Failed to download ${name}`);
         return await res.arrayBuffer();
       };

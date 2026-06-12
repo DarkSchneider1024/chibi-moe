@@ -12,6 +12,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Proxy route to bypass CORS for downloading firmware binaries
+app.get('/proxy', async (req, res) => {
+  try {
+    const targetUrl = req.query.url as string;
+    if (!targetUrl) return res.status(400).send('Missing url parameter');
+    
+    console.log(`Proxying download: ${targetUrl}`);
+    const fetchRes = await fetch(targetUrl);
+    if (!fetchRes.ok) return res.status(fetchRes.status).send('Failed to fetch');
+    
+    const arrayBuffer = await fetchRes.arrayBuffer();
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.send(Buffer.from(arrayBuffer));
+  } catch (e: any) {
+    console.error('Proxy Error:', e);
+    res.status(500).send('Proxy Error: ' + e.message);
+  }
+});
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
