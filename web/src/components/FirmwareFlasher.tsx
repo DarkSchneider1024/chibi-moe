@@ -106,7 +106,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
 
       logMsg('Starting flash process...');
       
-      await esploader.write_flash({
+      await esploader.writeFlash({
         fileArray: fileArray,
         flashSize: 'keep',
         flashMode: 'keep',
@@ -121,7 +121,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       
       logMsg('Flashing completed successfully!');
       // Hard reset
-      await esploader.hard_reset();
+      await esploader.hardReset();
     } catch (e: any) {
       console.error(e);
       logMsg('Flash failed: ' + e.message);
@@ -176,7 +176,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       setIsDownloading(false);
       logMsg('Starting flash process...');
       
-      await esploader.write_flash({
+      await esploader.writeFlash({
         fileArray: fileArray,
         flashSize: 'keep',
         flashMode: 'keep',
@@ -190,7 +190,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       });
       
       logMsg('Flashing completed successfully!');
-      await esploader.hard_reset();
+      await esploader.hardReset();
     } catch (e: any) {
       console.error(e);
       logMsg('Cloud Flash failed: ' + e.message);
