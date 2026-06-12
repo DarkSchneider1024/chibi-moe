@@ -1,0 +1,82 @@
+name: CI - Build and Push Chibi-Moe Server
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      owner_lc: ${{ steps.owner_lc.outputs.owner_lc }}
+    steps:
+      - id: owner_lc
+        run: echo "owner_lc=${OWNER,,}" >> $GITHUB_OUTPUT
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
+  build-server:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: |
+            ghcr.io/${{ needs.setup.outputs.owner_lc }}/chibi-moe-server:latest
+            ghcr.io/${{ needs.setup.outputs.owner_lc }}/chibi-moe-server:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-trigger:
+    needs: [setup, build-server]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger Kubernetes Rollout
+        run: |
+          DEPLOY_DATE=$(date +'%Y-%m-%d %H:%M:%S')
+          OWNER_LC=${{ needs.setup.outputs.owner_lc }}
+          
+          # 更新所有部署檔的時間戳記
+          find k8s/ -name "*.yaml" -exec sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" {} +
+          
+          # 更新映像檔標籤
+          sed -i "s|image: ghcr.io/${OWNER_LC}/chibi-moe-server:.*|image: ghcr.io/${OWNER_LC}/chibi-moe-server:${{ github.sha }}|g" k8s/base/deployment.yaml
+          
+          # 設定 Git 使用者資訊並提交
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add k8s/
+          git commit -m "deploy: trigger rollout at ${DEPLOY_DATE} [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin main
+          git push

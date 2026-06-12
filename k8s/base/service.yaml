@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chibi-moe-server-svc
+  namespace: k8sdemo
+spec:
+  selector:
+    app: chibi-moe-server
+  ports:
+  - protocol: TCP
+    port: 3001
+    targetPort: 3001
+  type: ClusterIP
