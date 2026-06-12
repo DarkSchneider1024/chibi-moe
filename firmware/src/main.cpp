@@ -54,8 +54,11 @@ void loadConfig() {
           if (doc.containsKey("websocket_host")) {
              websocket_host = doc["websocket_host"].as<String>();
           }
+          if (doc.containsKey("websocket_port")) {
+             websocket_port = doc["websocket_port"].as<int>();
+          }
           Serial.println("Config loaded successfully:");
-          Serial.println("WS Host: " + websocket_host);
+          Serial.println("WS Host: " + websocket_host + ":" + String(websocket_port));
         }
         file.close();
       }
@@ -70,6 +73,7 @@ void saveConfig() {
   Serial.println("Saving config");
   StaticJsonDocument<512> doc;
   doc["websocket_host"] = websocket_host;
+  doc["websocket_port"] = websocket_port;
 
   File file = LittleFS.open("/config.json", "w");
   if (!file) {
@@ -193,9 +197,15 @@ void setup() {
   WiFiManager wifiManager;
   wifiManager.setSaveConfigCallback(saveConfigCallback);
 
-  // Add custom parameter for Server IP
-  WiFiManagerParameter custom_server_ip("server", "Server IP", websocket_host.c_str(), 40);
+  // Add custom parameter for Server IP/Host
+  WiFiManagerParameter custom_server_ip("server", "Server IP/Host", websocket_host.c_str(), 40);
   wifiManager.addParameter(&custom_server_ip);
+
+  // Add custom parameter for Server Port
+  char port_str[6];
+  sprintf(port_str, "%d", websocket_port);
+  WiFiManagerParameter custom_server_port("port", "Server Port", port_str, 6);
+  wifiManager.addParameter(&custom_server_port);
 
   // Start Captive Portal if not connected
   Serial.println("Starting WiFiManager. Connect to 'Chibi-Moe-Setup' if needed.");
@@ -212,15 +222,22 @@ void setup() {
   // Save config if it was updated in the captive portal
   if (shouldSaveConfig) {
     websocket_host = custom_server_ip.getValue();
+    websocket_port = atoi(custom_server_port.getValue());
     saveConfig();
   } else {
     // Overwrite the in-memory variable in case it was changed without triggering save
     websocket_host = custom_server_ip.getValue(); 
+    websocket_port = atoi(custom_server_port.getValue());
   }
 
   // 4. Connect to WebSocket Backend
-  // Use .begin() for standard non-SSL WebSocket for local dev
-  webSocket.begin(websocket_host.c_str(), websocket_port, websocket_path.c_str());
+  if (websocket_port == 443) {
+    Serial.println("Connecting via wss:// (SSL)");
+    webSocket.beginSSL(websocket_host.c_str(), websocket_port, websocket_path.c_str(), "", "wss");
+  } else {
+    Serial.println("Connecting via ws:// (Non-SSL)");
+    webSocket.begin(websocket_host.c_str(), websocket_port, websocket_path.c_str());
+  }
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
   
