@@ -1,122 +1,109 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { useWebSocket } from './hooks/useWebSocket';
+import { useAudioRecorder } from './hooks/useAudioRecorder';
+import { useAudioPlayer } from './hooks/useAudioPlayer';
+import { SettingsModal } from './components/SettingsModal';
+import { RobotAvatar } from './components/RobotAvatar';
+import { ControlPanel } from './components/ControlPanel';
+import { ChatLog, ChatMessage } from './components/ChatLog';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
+
+  // Load Settings
+  const [apiKey, setApiKey] = useState(localStorage.getItem('geminiApiKey') || '');
+  const [ollamaEndpoint, setOllamaEndpoint] = useState(localStorage.getItem('ollamaEndpoint') || 'http://localhost:11434');
+
+  const { isConnected, lastMessage, sendMessage } = useWebSocket('ws://localhost:3001');
+  const { isRecording, startRecording, stopRecording } = useAudioRecorder();
+  const { isPlaying, playBase64Audio, stopPlaying } = useAudioPlayer();
+
+  useEffect(() => {
+    if (!lastMessage) return;
+    
+    // Handle incoming messages from the backend
+    if (lastMessage.type === 'text') {
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'robot', text: lastMessage.data }]);
+    } else if (lastMessage.type === 'audio_out') {
+      setRobotStatus('speaking');
+      playBase64Audio(lastMessage.data);
+    } else if (lastMessage.type === 'status') {
+      // Backend tells us it's processing
+      setRobotStatus(lastMessage.state);
+    }
+  }, [lastMessage, playBase64Audio]);
+
+  useEffect(() => {
+    if (!isPlaying && robotStatus === 'speaking') {
+      setRobotStatus('idle');
+    }
+  }, [isPlaying, robotStatus]);
+
+  useEffect(() => {
+    if (isRecording) {
+      setRobotStatus('listening');
+      stopPlaying(); // Stop any currently playing audio if user interrupts
+    } else if (!isRecording && robotStatus === 'listening') {
+      setRobotStatus('processing');
+    }
+  }, [isRecording, stopPlaying]);
+
+  const handleStartRecording = () => {
+    startRecording();
+  };
+
+  const handleStopRecording = async () => {
+    const base64Audio = await stopRecording();
+    if (base64Audio) {
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', text: '(Audio Message)' }]);
+      sendMessage({ type: 'audio', data: base64Audio });
+    } else {
+      setRobotStatus('idle');
+    }
+  };
+
+  const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string }) => {
+    setApiKey(settings.apiKey);
+    setOllamaEndpoint(settings.ollamaEndpoint);
+    // Send updated settings to backend if needed
+    sendMessage({ type: 'config', settings });
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      minHeight: '100vh',
+      padding: '24px',
+      position: 'relative'
+    }}>
+      <h1 style={{ 
+        position: 'absolute', top: '24px', left: '24px', 
+        fontSize: '1.2rem', color: 'var(--text-secondary)' 
+      }}>
+        Chibi-Moe
+      </h1>
 
-      <div className="ticks"></div>
+      <RobotAvatar status={robotStatus} />
+      
+      <ChatLog messages={messages} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <ControlPanel 
+        isRecording={isRecording}
+        isConnected={isConnected}
+        onStartRecording={handleStartRecording}
+        onStopRecording={handleStopRecording}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        onSave={handleSaveSettings} 
+      />
+    </div>
+  );
 }
-
-export default App
