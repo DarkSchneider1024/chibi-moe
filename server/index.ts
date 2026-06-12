@@ -74,8 +74,18 @@ wss.on('connection', (ws) => {
   console.log('Client connected');
   clients.set(ws, { geminiApiKey: '', ollamaEndpoint: 'http://localhost:11434', enableMachineOps: false, history: [] });
 
-  ws.on('message', async (rawMessage) => {
+  ws.on('message', async (rawMessage, isBinary) => {
     try {
+      if (isBinary) {
+        // Binary message (e.g. video frame from ESP32). Broadcast to all other clients.
+        wss.clients.forEach(c => {
+          if (c !== ws && c.readyState === WebSocket.OPEN) {
+            c.send(rawMessage, { binary: true });
+          }
+        });
+        return;
+      }
+
       const msg = JSON.parse(rawMessage.toString());
       const state = clients.get(ws);
       if (!state) return;

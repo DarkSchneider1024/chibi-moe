@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export function useWebSocket(url: string) {
+export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void) {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -9,6 +9,7 @@ export function useWebSocket(url: string) {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const ws = new WebSocket(url);
+    ws.binaryType = 'blob'; // Ensure we receive Blob objects
 
     ws.onopen = () => {
       console.log('Connected to WebSocket server');
@@ -28,6 +29,13 @@ export function useWebSocket(url: string) {
     };
 
     ws.onmessage = (event) => {
+      if (event.data instanceof Blob) {
+        if (onBinaryMessage) {
+          onBinaryMessage(event.data);
+        }
+        return;
+      }
+      
       try {
         const data = JSON.parse(event.data);
         setLastMessage(data);
@@ -37,7 +45,7 @@ export function useWebSocket(url: string) {
     };
 
     wsRef.current = ws;
-  }, [url]);
+  }, [url, onBinaryMessage]);
 
   useEffect(() => {
     connect();

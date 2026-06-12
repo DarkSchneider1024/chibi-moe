@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
@@ -8,6 +8,7 @@ import { ControlPanel } from './components/ControlPanel';
 import { ChatLog, type ChatMessage } from './components/ChatLog';
 import { FirmwareFlasher } from './components/FirmwareFlasher';
 import { ManualModal } from './components/ManualModal';
+import { CameraView } from './components/CameraView';
 
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -19,7 +20,17 @@ export default function App() {
   // Load Settings (no longer kept in App state since they are not used here except backendUrl)
   const [backendUrl, setBackendUrl] = useState(localStorage.getItem('backendUrl') || 'ws://localhost:3001');
 
-  const { isConnected, lastMessage, sendMessage } = useWebSocket(backendUrl);
+  // Camera stream state
+  const [cameraImageUrl, setCameraImageUrl] = useState<string | null>(null);
+
+  const handleBinaryMessage = useCallback((blob: Blob) => {
+    setCameraImageUrl(prevUrl => {
+      if (prevUrl) URL.revokeObjectURL(prevUrl);
+      return URL.createObjectURL(blob);
+    });
+  }, []);
+
+  const { isConnected, lastMessage, sendMessage } = useWebSocket(backendUrl, handleBinaryMessage);
   const { isRecording, startRecording, stopRecording } = useAudioRecorder();
   const { isPlaying, playBase64Audio, stopPlaying } = useAudioPlayer();
 
@@ -97,7 +108,10 @@ export default function App() {
         Chibi-Moe
       </h1>
 
-      <RobotAvatar status={robotStatus} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center', alignItems: 'flex-start', width: '100%' }}>
+        <RobotAvatar status={robotStatus} />
+        <CameraView imageUrl={cameraImageUrl} isConnected={isConnected} />
+      </div>
       
       <ChatLog messages={messages} />
 

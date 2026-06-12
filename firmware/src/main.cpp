@@ -4,6 +4,26 @@
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include "esp_camera.h"
+
+// AI-Thinker ESP32-CAM pin configuration
+#define PWDN_GPIO_NUM     32
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM      0
+#define SIOD_GPIO_NUM     26
+#define SIOC_GPIO_NUM     27
+
+#define Y9_GPIO_NUM       35
+#define Y8_GPIO_NUM       34
+#define Y7_GPIO_NUM       39
+#define Y6_GPIO_NUM       36
+#define Y5_GPIO_NUM       21
+#define Y4_GPIO_NUM       19
+#define Y3_GPIO_NUM       18
+#define Y2_GPIO_NUM        5
+#define VSYNC_GPIO_NUM    25
+#define HREF_GPIO_NUM     23
+#define PCLK_GPIO_NUM     22
 
 // Global config variables
 String wifi_ssid = "";
@@ -13,6 +33,8 @@ int websocket_port = 443;
 String websocket_path = "/";
 
 WebSocketsClient webSocket;
+bool camera_initialized = false;
+unsigned long last_frame_time = 0;
 
 // Load config from LittleFS
 bool loadConfig() {
@@ -48,6 +70,51 @@ bool loadConfig() {
   return true;
 }
 
+// Camera Initialization
+void initCamera() {
+  camera_config_t config;
+  config.ledc_channel = LEDC_CHANNEL_0;
+  config.ledc_timer = LEDC_TIMER_0;
+  config.pin_d0 = Y2_GPIO_NUM;
+  config.pin_d1 = Y3_GPIO_NUM;
+  config.pin_d2 = Y4_GPIO_NUM;
+  config.pin_d3 = Y5_GPIO_NUM;
+  config.pin_d4 = Y6_GPIO_NUM;
+  config.pin_d5 = Y7_GPIO_NUM;
+  config.pin_d6 = Y8_GPIO_NUM;
+  config.pin_d7 = Y9_GPIO_NUM;
+  config.pin_xclk = XCLK_GPIO_NUM;
+  config.pin_pclk = PCLK_GPIO_NUM;
+  config.pin_vsync = VSYNC_GPIO_NUM;
+  config.pin_href = HREF_GPIO_NUM;
+  config.pin_sccb_sda = SIOD_GPIO_NUM;
+  config.pin_sccb_scl = SIOC_GPIO_NUM;
+  config.pin_pwdn = PWDN_GPIO_NUM;
+  config.pin_reset = RESET_GPIO_NUM;
+  config.xclk_freq_hz = 20000000;
+  config.pixel_format = PIXFORMAT_JPEG; // Stream JPEG
+
+  // Init with high specs to pre-allocate larger buffers
+  if(psramFound()){
+    config.frame_size = FRAMESIZE_VGA;
+    config.jpeg_quality = 10;
+    config.fb_count = 2;
+  } else {
+    config.frame_size = FRAMESIZE_SVGA;
+    config.jpeg_quality = 12;
+    config.fb_count = 1;
+  }
+
+  esp_err_t err = esp_camera_init(&config);
+  if (err != ESP_OK) {
+    Serial.printf("Camera init failed with error 0x%x\n", err);
+    return;
+  }
+  
+  camera_initialized = true;
+  Serial.println("Camera initialized successfully!");
+}
+
 // WebSocket Event Handler
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
@@ -77,7 +144,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
           Serial.println("Command: " + cmd);
           Serial.println("Direction: " + dir);
           
-          // TODO: Add motor control logic here based on cmd and dir
+          // Add motor control logic here based on cmd and dir
           if (cmd == "move") {
              if (dir == "forward") {
                 // Motor forward
@@ -93,7 +160,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       break;
     }
     case WStype_BIN:
-      // Audio or binary data
+      // Audio or binary data coming from server (if any)
       Serial.printf("[WSc] get binary length: %u\n", length);
       break;
     default:
@@ -112,7 +179,10 @@ void setup() {
     while (1) delay(1000); // Halt
   }
 
-  // 2. Connect to Wi-Fi
+  // 2. Initialize Camera
+  initCamera();
+
+  // 3. Connect to Wi-Fi
   Serial.print("Connecting to Wi-Fi: ");
   Serial.println(wifi_ssid);
   WiFi.begin(wifi_ssid.c_str(), wifi_password.c_str());
@@ -125,15 +195,9 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  // 3. Connect to WebSocket Backend
-  // Bypass SSL certificate validation for ease of development
-  // IMPORTANT: For production, consider using setCACert()
+  // 4. Connect to WebSocket Backend
   webSocket.beginSSL(websocket_host.c_str(), websocket_port, websocket_path.c_str(), "", "wss");
-  
-  // Register the event handler
   webSocket.onEvent(webSocketEvent);
-  
-  // Automatically reconnect if connection is lost
   webSocket.setReconnectInterval(5000);
   
   Serial.println("WebSocket initialization complete.");
@@ -141,5 +205,24 @@ void setup() {
 
 void loop() {
   webSocket.loop();
-  // TODO: Add sensor reading and other non-blocking loop code here
+  
+  // Stream camera frames if connected
+  if (camera_initialized && webSocket.isConnected()) {
+    // Send 10 frames per second (every 100ms)
+    if (millis() - last_frame_time > 100) {
+      last_frame_time = millis();
+      
+      camera_fb_t * fb = esp_camera_fb_get();
+      if (!fb) {
+        Serial.println("Camera capture failed");
+        return;
+      }
+      
+      // Send the JPEG buffer as binary data over WebSocket
+      webSocket.sendBIN(fb->buf, fb->len);
+      
+      // Return the frame buffer back to the driver for reuse
+      esp_camera_fb_return(fb);
+    }
+  }
 }
