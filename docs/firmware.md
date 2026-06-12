@@ -23,23 +23,30 @@
 
 ## 🚀 第二階段：開始燒錄 (請選擇一種最適合您的方法)
 
-### 方法 A：使用網頁一鍵燒錄 (Web Serial) - 🌟 最推薦新手！
+### 方法 A：使用網頁一鍵雲端更新 (Web Serial) - 🌟 最推薦新手！
 
-這是最簡單的方法，不需要安裝任何驅動或軟體。
+這是最簡單的方法，不需要安裝任何驅動或軟體，而且會自動抓取最新版韌體。
 
 1. **開啟瀏覽器**：請務必使用最新版的 **Google Chrome** 或 **Microsoft Edge**。
 2. **連接硬體**：將機器人插上 USB 線，另一頭接上電腦。
 3. **開啟網頁**：進入 Chibi-Moe 的 Web 系統首頁。
-4. **進入燒錄介面**：點擊網頁選單中的「**設定**」->「**韌體更新 (Firmware Update)**」。
+4. **進入燒錄介面**：在網頁下方的控制面板（Control Panel）中，點擊 **CPU 圖示**（Firmware Flasher）按鈕。
 5. **連線設備**：
-   - 點擊「**連接設備 (Connect)**」按鈕。
+   - 點擊「**Connect Device**」按鈕。
    - 瀏覽器會跳出一個小視窗，請選擇對應的序列埠（在 Windows 上通常叫 `COM3` 或 `COM4`，在 Mac 上通常叫 `/dev/tty.usbmodem...` 或 `cu.usbserial...`）。
    - 選擇後點擊「連線」。
-6. **執行燒錄**：
-   - 點擊「**開始燒錄 (Start Flashing)**」。
+6. **執行一鍵燒錄**：
+   - 點擊藍紫色按鈕「**Flash Latest Cloud Release**」。
+   - 系統會自動從 GitHub 下載最新編譯的韌體，並開始燒錄進度。
    - 請耐心等待網頁上的進度條跑到 100%（約需 30~60 秒）。
    - 燒錄期間**絕對不可以拔除 USB 線**。
-7. **完成**：顯示「燒錄成功」後，機器人會自動重啟。
+7. **完成**：顯示「Flashing completed successfully!」後，機器人會自動重啟。
+
+---
+
+### 方法 B：手動選擇檔案燒錄 (Advanced Mode)
+
+如果你有自己修改程式碼並在本地端編譯（例如使用 PlatformIO），請在 Firmware Flasher 中點擊展開「**Advanced: Manual File Selection**」，然後手動選取你編譯出的三個檔案 (`bootloader.bin`, `partitions.bin`, `firmware.bin`) 並點擊「Start Manual Flash」。
 
 ---
 

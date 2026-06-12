@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ESPLoader, Transport } from 'esptool-js';
-import { X, Usb } from 'lucide-react';
+import { X, Usb, CloudDownload, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface FirmwareFlasherProps {
   isOpen: boolean;
@@ -18,6 +18,8 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [isFlashing, setIsFlashing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
   // Helper to add logs
   const logMsg = (msg: string) => {
@@ -50,7 +52,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
 
       const loader = new ESPLoader(options);
       // @ts-ignore
-      await loader.main_fn();
+      await loader.main();
       
       setEsploader(loader);
       setIsConnected(true);
@@ -128,6 +130,72 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
     }
   };
 
+  const handleCloudFlash = async () => {
+    if (!esploader || !isConnected) return;
+    
+    setIsFlashing(true);
+    setIsDownloading(true);
+    setProgress(0);
+    logMsg('Fetching latest release info from GitHub...');
+    
+    try {
+      const response = await fetch('https://api.github.com/repos/DarkSchneider1024/chibi-moe/releases/latest');
+      if (!response.ok) {
+        throw new Error('Failed to fetch release info. Make sure the repository is public or you have internet access.');
+      }
+      const release = await response.json();
+      logMsg(`Found release: ${release.name}`);
+      
+      const bootloaderAsset = release.assets.find((a: any) => a.name === 'bootloader.bin');
+      const partitionsAsset = release.assets.find((a: any) => a.name === 'partitions.bin');
+      const firmwareAsset = release.assets.find((a: any) => a.name === 'firmware.bin');
+      
+      if (!firmwareAsset) throw new Error('firmware.bin not found in release assets.');
+      
+      const downloadFile = async (url: string, name: string) => {
+        logMsg(`Downloading ${name}...`);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed to download ${name}`);
+        return await res.arrayBuffer();
+      };
+
+      const fileArray = [];
+      if (bootloaderAsset) {
+        fileArray.push({ data: new Uint8Array(await downloadFile(bootloaderAsset.browser_download_url, 'bootloader')), address: 0x1000 });
+      }
+      if (partitionsAsset) {
+        fileArray.push({ data: new Uint8Array(await downloadFile(partitionsAsset.browser_download_url, 'partitions')), address: 0x8000 });
+      }
+      fileArray.push({ data: new Uint8Array(await downloadFile(firmwareAsset.browser_download_url, 'firmware')), address: 0x10000 });
+
+      setIsDownloading(false);
+      logMsg('Starting flash process...');
+      
+      await esploader.write_flash({
+        fileArray: fileArray,
+        flashSize: 'keep',
+        flashMode: 'keep',
+        flashFreq: 'keep',
+        eraseAll: false,
+        compress: true,
+        reportProgress: (_fileIndex: number, written: number, total: number) => {
+          const percentage = Math.round((written / total) * 100);
+          setProgress(percentage);
+        }
+      });
+      
+      logMsg('Flashing completed successfully!');
+      await esploader.hard_reset();
+    } catch (e: any) {
+      console.error(e);
+      logMsg('Cloud Flash failed: ' + e.message);
+      setIsDownloading(false);
+    } finally {
+      setIsFlashing(false);
+      setIsDownloading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -155,29 +223,62 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Bootloader (0x1000) - Optional</label>
-            <input type="file" accept=".bin" onChange={(e) => setBootloaderFile(e.target.files?.[0] || null)} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Partitions (0x8000) - Optional</label>
-            <input type="file" accept=".bin" onChange={(e) => setPartitionsFile(e.target.files?.[0] || null)} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Firmware (0x10000) - Required</label>
-            <input type="file" accept=".bin" onChange={(e) => setFirmwareFile(e.target.files?.[0] || null)} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <button 
+            className="btn-primary" 
+            style={{ 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              padding: '16px', fontSize: '1.1rem',
+              opacity: (!isConnected || isFlashing) ? 0.5 : 1,
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+            }}
+            disabled={!isConnected || isFlashing}
+            onClick={handleCloudFlash}
+          >
+            <CloudDownload size={24} />
+            {isDownloading ? 'Downloading from Cloud...' : (isFlashing ? `Flashing... ${progress}%` : 'Flash Latest Cloud Release')}
+          </button>
+
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+            <button 
+              onClick={() => setIsAdvancedMode(!isAdvancedMode)}
+              style={{ 
+                background: 'none', border: 'none', color: 'var(--text-secondary)', 
+                display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.9rem',
+                margin: '0 auto'
+              }}
+            >
+              {isAdvancedMode ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              Advanced: Manual File Selection
+            </button>
+            
+            {isAdvancedMode && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', marginTop: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Bootloader (0x1000) - Optional</label>
+                  <input type="file" accept=".bin" onChange={(e) => setBootloaderFile(e.target.files?.[0] || null)} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Partitions (0x8000) - Optional</label>
+                  <input type="file" accept=".bin" onChange={(e) => setPartitionsFile(e.target.files?.[0] || null)} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Firmware (0x10000) - Required</label>
+                  <input type="file" accept=".bin" onChange={(e) => setFirmwareFile(e.target.files?.[0] || null)} />
+                </div>
+                
+                <button 
+                  className="btn-primary" 
+                  disabled={!isConnected || isFlashing || !firmwareFile} 
+                  onClick={handleFlash}
+                  style={{ opacity: (!isConnected || isFlashing || !firmwareFile) ? 0.5 : 1, marginTop: '8px' }}
+                >
+                  {isFlashing && !isDownloading ? `Flashing... ${progress}%` : 'Start Manual Flash'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
-        <button 
-          className="btn-primary" 
-          disabled={!isConnected || isFlashing || !firmwareFile} 
-          onClick={handleFlash}
-          style={{ opacity: (!isConnected || isFlashing || !firmwareFile) ? 0.5 : 1 }}
-        >
-          {isFlashing ? `Flashing... ${progress}%` : 'Start Flashing'}
-        </button>
 
         {isFlashing && (
           <div style={{ width: '100%', height: '8px', background: 'var(--bg-secondary)', borderRadius: '4px', overflow: 'hidden' }}>
