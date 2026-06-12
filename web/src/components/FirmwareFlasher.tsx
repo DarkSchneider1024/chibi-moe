@@ -121,7 +121,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       
       logMsg('Flashing completed successfully!');
       // Hard reset
-      await esploader.hardReset();
+      await esploader.after('hard_reset');
     } catch (e: any) {
       console.error(e);
       logMsg('Flash failed: ' + e.message);
@@ -190,7 +190,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       });
       
       logMsg('Flashing completed successfully!');
-      await esploader.hardReset();
+      await esploader.after('hard_reset');
     } catch (e: any) {
       console.error(e);
       logMsg('Cloud Flash failed: ' + e.message);
