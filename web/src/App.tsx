@@ -7,10 +7,12 @@ import { RobotAvatar } from './components/RobotAvatar';
 import { ControlPanel } from './components/ControlPanel';
 import { ChatLog, ChatMessage } from './components/ChatLog';
 import { FirmwareFlasher } from './components/FirmwareFlasher';
+import { ManualModal } from './components/ManualModal';
 
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFlasherOpen, setIsFlasherOpen] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
 
@@ -28,6 +30,14 @@ export default function App() {
     // Handle incoming messages from the backend
     if (lastMessage.type === 'text') {
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'robot', text: lastMessage.data }]);
+    } else if (lastMessage.type === 'command') {
+      let actionText = '';
+      if (lastMessage.action === 'robot_move') {
+        actionText = `🤖 執行動作: 移動 (${lastMessage.args.action}, ${lastMessage.args.duration}ms)`;
+      } else if (lastMessage.action === 'robot_expression') {
+        actionText = `🤖 執行表情: ${lastMessage.args.emotion}`;
+      }
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'robot', text: actionText }]);
     } else if (lastMessage.type === 'audio_out') {
       setRobotStatus('speaking');
       playBase64Audio(lastMessage.data);
@@ -66,10 +76,10 @@ export default function App() {
     }
   };
 
-  const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string }) => {
+  const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean }) => {
     setApiKey(settings.apiKey);
     setOllamaEndpoint(settings.ollamaEndpoint);
-    // Send updated settings to backend if needed
+    // Send updated settings to backend
     sendMessage({ type: 'config', settings });
   };
 
@@ -100,6 +110,7 @@ export default function App() {
         onStopRecording={handleStopRecording}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenFirmwareFlasher={() => setIsFlasherOpen(true)}
+        onOpenManual={() => setIsManualOpen(true)}
       />
 
       <SettingsModal 
@@ -111,6 +122,11 @@ export default function App() {
       <FirmwareFlasher 
         isOpen={isFlasherOpen}
         onClose={() => setIsFlasherOpen(false)}
+      />
+
+      <ManualModal
+        isOpen={isManualOpen}
+        onClose={() => setIsManualOpen(false)}
       />
     </div>
   );

@@ -4,18 +4,21 @@ import { X } from 'lucide-react';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (settings: { apiKey: string; ollamaEndpoint: string }) => void;
+  onSave: (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean }) => void;
 }
 
 export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
   const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
+  const [enableMachineOps, setEnableMachineOps] = useState(false);
 
   useEffect(() => {
     const savedApiKey = localStorage.getItem('geminiApiKey');
     const savedEndpoint = localStorage.getItem('ollamaEndpoint');
+    const savedOps = localStorage.getItem('enableMachineOps');
     if (savedApiKey) setApiKey(savedApiKey);
     if (savedEndpoint) setOllamaEndpoint(savedEndpoint);
+    if (savedOps === 'true') setEnableMachineOps(true);
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -23,7 +26,8 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const handleSave = () => {
     localStorage.setItem('geminiApiKey', apiKey);
     localStorage.setItem('ollamaEndpoint', ollamaEndpoint);
-    onSave({ apiKey, ollamaEndpoint });
+    localStorage.setItem('enableMachineOps', enableMachineOps.toString());
+    onSave({ apiKey, ollamaEndpoint, enableMachineOps });
     onClose();
   };
 
@@ -58,7 +62,7 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
           />
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             Ollama Endpoint
           </label>
@@ -69,6 +73,19 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
             onChange={(e) => setOllamaEndpoint(e.target.value)}
             placeholder="http://localhost:11434"
           />
+        </div>
+
+        <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <input 
+            type="checkbox" 
+            id="enableOps"
+            checked={enableMachineOps}
+            onChange={(e) => setEnableMachineOps(e.target.checked)}
+            style={{ width: '18px', height: '18px', accentColor: 'var(--accent-blue)' }}
+          />
+          <label htmlFor="enableOps" style={{ fontSize: '0.9rem', color: 'var(--text-primary)', cursor: 'pointer' }}>
+            Enable Machine Operations (Actions)
+          </label>
         </div>
 
         <button className="btn-primary" style={{ width: '100%' }} onClick={handleSave}>

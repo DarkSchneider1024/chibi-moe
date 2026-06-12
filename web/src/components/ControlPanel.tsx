@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, Square, Settings, Wifi, WifiOff, Cpu } from 'lucide-react';
+import { Mic, Square, Settings, Wifi, WifiOff, Cpu, BookOpen } from 'lucide-react';
 
 interface ControlPanelProps {
   isRecording: boolean;
@@ -8,9 +8,10 @@ interface ControlPanelProps {
   onStopRecording: () => void;
   onOpenSettings: () => void;
   onOpenFirmwareFlasher: () => void;
+  onOpenManual: () => void;
 }
 
-export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher }: ControlPanelProps) {
+export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher, onOpenManual }: ControlPanelProps) {
   return (
     <div className="glass-panel" style={{ 
       display: 'flex', 
@@ -45,6 +46,9 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
       </button>
 
       <div style={{ display: 'flex', gap: '12px' }}>
+        <button className="btn-icon" onClick={onOpenManual} title="Manual">
+          <BookOpen size={20} />
+        </button>
         <button className="btn-icon" onClick={onOpenFirmwareFlasher} title="Firmware Flasher">
           <Cpu size={20} />
         </button>

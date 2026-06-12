@@ -3,7 +3,7 @@ import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 import dotenv from 'dotenv';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import * as googleTTS from 'google-tts-api';
 
 dotenv.config();
@@ -19,6 +19,7 @@ const wss = new WebSocketServer({ server });
 interface ClientState {
   geminiApiKey: string;
   ollamaEndpoint: string;
+  enableMachineOps: boolean;
   history: any[];
 }
 
@@ -40,9 +41,38 @@ async function generateTTS(text: string): Promise<string> {
   }
 }
 
+// Define Robot Tools
+const robotTools = [{
+  functionDeclarations: [
+    {
+      name: 'robot_move',
+      description: 'Control the robot movement.',
+      parameters: {
+        type: Type.OBJECT,
+        properties: {
+          action: { type: Type.STRING, enum: ['move_forward', 'move_backward', 'turn_left', 'turn_right', 'dance', 'spin_around'] },
+          duration: { type: Type.INTEGER, description: 'Duration in milliseconds' }
+        },
+        required: ['action', 'duration']
+      }
+    },
+    {
+      name: 'robot_expression',
+      description: 'Control the robot facial expression or LED color.',
+      parameters: {
+        type: Type.OBJECT,
+        properties: {
+          emotion: { type: Type.STRING, enum: ['happy', 'sad', 'angry', 'surprised', 'neutral'] }
+        },
+        required: ['emotion']
+      }
+    }
+  ]
+}];
+
 wss.on('connection', (ws) => {
   console.log('Client connected');
-  clients.set(ws, { geminiApiKey: '', ollamaEndpoint: 'http://localhost:11434', history: [] });
+  clients.set(ws, { geminiApiKey: '', ollamaEndpoint: 'http://localhost:11434', enableMachineOps: false, history: [] });
 
   ws.on('message', async (rawMessage) => {
     try {
@@ -53,7 +83,8 @@ wss.on('connection', (ws) => {
       if (msg.type === 'config') {
         state.geminiApiKey = msg.settings.apiKey;
         state.ollamaEndpoint = msg.settings.ollamaEndpoint;
-        console.log('Updated config for client');
+        state.enableMachineOps = msg.settings.enableMachineOps || false;
+        console.log('Updated config for client. Machine Ops:', state.enableMachineOps);
       } 
       else if (msg.type === 'audio') {
         const base64Audio = msg.data;
@@ -63,28 +94,74 @@ wss.on('connection', (ws) => {
           try {
             const ai = new GoogleGenAI({ apiKey: state.geminiApiKey });
             
-            const prompt = "你是一個名為 chibi-moe 的可愛機器人伴侶。請簡短、友善、活潑地用繁體中文回覆我的語音訊息。";
+            let prompt = "你是一個名為 chibi-moe 的可愛機器人伴侶。請簡短、友善、活潑地用繁體中文回覆我的語音訊息。";
+            if (state.enableMachineOps) {
+              prompt += " 若對話情境適合，你可以呼叫工具來控制機器人移動或改變表情！";
+              prompt += " 注意：如果使用者要求你做你不會或硬體無法支援的動作（例如後空翻、飛起來等），請呼叫 robot_move 工具並將 action 設為 'spin_around'，然後在後續的回覆文字說「這個動作我還不會哦，我轉圈圈給你看！」之類的話。";
+            }
             
+            state.history.push({ role: 'user', parts: [
+              { text: prompt },
+              { inlineData: { mimeType: 'audio/webm', data: base64Audio } }
+            ]});
+
             const response = await ai.models.generateContent({
               model: 'gemini-1.5-flash',
-              contents: [
-                ...state.history,
-                {
-                  role: 'user',
-                  parts: [
-                    { text: prompt },
-                    { inlineData: { mimeType: 'audio/webm', data: base64Audio } }
-                  ]
-                }
-              ],
+              contents: state.history,
+              tools: state.enableMachineOps ? robotTools : undefined
             });
 
-            const replyText = response.text || '';
-            console.log('Gemini reply:', replyText);
+            let replyText = response.text || '';
 
-            // Add to history (skip storing large audio to prevent huge context, or store a text placeholder)
-            state.history.push({ role: 'user', parts: [{ text: "[用戶傳送了一段語音]" }] });
-            state.history.push({ role: 'model', parts: [{ text: replyText }] });
+            // Clean up the prompt from history to save tokens for next turns
+            state.history[state.history.length - 1].parts[0].text = "[用戶傳送了一段語音]";
+
+            // Handle Function Calls
+            if (response.functionCalls && response.functionCalls.length > 0) {
+              const calls = response.functionCalls;
+              const functionResponses: any[] = [];
+              
+              state.history.push({ role: 'model', parts: calls.map(c => ({ functionCall: c })) });
+
+              for (const call of calls) {
+                console.log('Function call:', call.name, call.args);
+                
+                // Broadcast command to all connected clients (Robot & Web UI)
+                const cmd = {
+                  type: 'command',
+                  action: call.name,
+                  args: call.args
+                };
+                wss.clients.forEach(c => {
+                  if (c.readyState === WebSocket.OPEN) {
+                    c.send(JSON.stringify(cmd));
+                  }
+                });
+
+                functionResponses.push({
+                  functionResponse: {
+                    name: call.name,
+                    response: { result: `Executed ${call.name} successfully.` }
+                  }
+                });
+              }
+
+              // Send the result back to Gemini to get the final spoken response
+              state.history.push({ role: 'user', parts: functionResponses });
+              
+              const finalResponse = await ai.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: state.history,
+                tools: state.enableMachineOps ? robotTools : undefined
+              });
+
+              replyText = finalResponse.text || '';
+              state.history.push({ role: 'model', parts: [{ text: replyText }] });
+            } else {
+              state.history.push({ role: 'model', parts: [{ text: replyText }] });
+            }
+
+            console.log('Gemini reply:', replyText);
 
             // Send text reply to client log
             ws.send(JSON.stringify({ type: 'text', data: replyText }));
@@ -103,8 +180,8 @@ wss.on('connection', (ws) => {
             ws.send(JSON.stringify({ type: 'status', state: 'idle' }));
           }
         } else {
-          // Fallback message for Ollama / missing key
-          ws.send(JSON.stringify({ type: 'text', data: 'Gemini API Key 尚未設定。Ollama 本地語音辨識功能仍在開發中，請先輸入 API Key 使用 Gemini。' }));
+          // Fallback
+          ws.send(JSON.stringify({ type: 'text', data: 'Gemini API Key 尚未設定。請先輸入 API Key。' }));
           ws.send(JSON.stringify({ type: 'status', state: 'idle' }));
         }
       }
