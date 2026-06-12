@@ -4,6 +4,7 @@
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <WiFiManager.h>
 #include "esp_camera.h"
 
 // GOOUUU ESP32-S3-CAM pin configuration
@@ -26,48 +27,57 @@
 #define PCLK_GPIO_NUM     13
 
 // Global config variables
-String wifi_ssid = "";
-String wifi_password = "";
-String websocket_host = "";
-int websocket_port = 443;
+String websocket_host = "192.168.1.100";
+int websocket_port = 3001;
 String websocket_path = "/";
+bool shouldSaveConfig = false;
 
 WebSocketsClient webSocket;
 bool camera_initialized = false;
 unsigned long last_frame_time = 0;
 
+// Callback notifying us of the need to save config
+void saveConfigCallback () {
+  Serial.println("Should save config");
+  shouldSaveConfig = true;
+}
+
 // Load config from LittleFS
-bool loadConfig() {
-  if (!LittleFS.begin(true)) {
+void loadConfig() {
+  if (LittleFS.begin(true)) {
+    if (LittleFS.exists("/config.json")) {
+      File file = LittleFS.open("/config.json", "r");
+      if (file) {
+        StaticJsonDocument<512> doc;
+        DeserializationError error = deserializeJson(doc, file);
+        if (!error) {
+          if (doc.containsKey("websocket_host")) {
+             websocket_host = doc["websocket_host"].as<String>();
+          }
+          Serial.println("Config loaded successfully:");
+          Serial.println("WS Host: " + websocket_host);
+        }
+        file.close();
+      }
+    }
+  } else {
     Serial.println("LittleFS Mount Failed");
-    return false;
   }
+}
 
-  File file = LittleFS.open("/config.json", "r");
-  if (!file) {
-    Serial.println("Failed to open config.json");
-    return false;
-  }
-
+// Save config to LittleFS
+void saveConfig() {
+  Serial.println("Saving config");
   StaticJsonDocument<512> doc;
-  DeserializationError error = deserializeJson(doc, file);
-  if (error) {
-    Serial.println("Failed to parse config.json");
-    return false;
+  doc["websocket_host"] = websocket_host;
+
+  File file = LittleFS.open("/config.json", "w");
+  if (!file) {
+    Serial.println("Failed to open config file for writing");
+  } else {
+    serializeJson(doc, file);
+    file.close();
   }
-
-  wifi_ssid = doc["wifi_ssid"].as<String>();
-  wifi_password = doc["wifi_password"].as<String>();
-  websocket_host = doc["websocket_host"].as<String>();
-  websocket_port = doc["websocket_port"].as<int>();
-  websocket_path = doc["websocket_path"].as<String>();
-
-  Serial.println("Config loaded successfully:");
-  Serial.println("SSID: " + wifi_ssid);
-  Serial.println("WS Host: " + websocket_host);
-  
-  file.close();
-  return true;
 }
 
 // Camera Initialization
@@ -174,29 +184,43 @@ void setup() {
   Serial.println("\n--- Chibi-Moe Robot Firmware Starting ---");
 
   // 1. Load Configuration
-  if (!loadConfig()) {
-    Serial.println("CRITICAL: Cannot proceed without config.json");
-    while (1) delay(1000); // Halt
-  }
+  loadConfig();
 
   // 2. Initialize Camera
   initCamera();
 
-  // 3. Connect to Wi-Fi
-  Serial.print("Connecting to Wi-Fi: ");
-  Serial.println(wifi_ssid);
-  WiFi.begin(wifi_ssid.c_str(), wifi_password.c_str());
+  // 3. WiFiManager Setup
+  WiFiManager wifiManager;
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  // Add custom parameter for Server IP
+  WiFiManagerParameter custom_server_ip("server", "Server IP", websocket_host.c_str(), 40);
+  wifiManager.addParameter(&custom_server_ip);
+
+  // Start Captive Portal if not connected
+  Serial.println("Starting WiFiManager. Connect to 'Chibi-Moe-Setup' if needed.");
+  if (!wifiManager.autoConnect("Chibi-Moe-Setup")) {
+    Serial.println("Failed to connect and hit timeout");
+    delay(3000);
+    ESP.restart(); // Reset and try again
   }
+
   Serial.println("\nWiFi Connected!");
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
+  // Save config if it was updated in the captive portal
+  if (shouldSaveConfig) {
+    websocket_host = custom_server_ip.getValue();
+    saveConfig();
+  } else {
+    // Overwrite the in-memory variable in case it was changed without triggering save
+    websocket_host = custom_server_ip.getValue(); 
+  }
+
   // 4. Connect to WebSocket Backend
-  webSocket.beginSSL(websocket_host.c_str(), websocket_port, websocket_path.c_str(), "", "wss");
+  // Use .begin() for standard non-SSL WebSocket for local dev
+  webSocket.begin(websocket_host.c_str(), websocket_port, websocket_path.c_str());
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
   
