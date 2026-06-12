@@ -13,11 +13,21 @@
 
 ```mermaid
 graph TD;
-    Web[Web Frontend] <-->|HTTP/REST| Backend[Node.js Backend]
-    Backend <-->|WebSocket| Robot[Robot Firmware]
+    Web[Web Frontend (Vercel)] <-->|WebSocket wss://| Backend[Node.js Backend (OCI K8s)]
+    Backend <-->|WebSocket wss://| Robot[Robot Firmware]
     Backend <-->|API Calls| LLM[Gemini API / Ollama]
     Backend <-->|MCP Protocol| MCP[Internal MCP Server]
 ```
+
+## 3. 雲端部署架構 (Cloud Deployment)
+
+系統分為前端靜態網頁與後端長連線伺服器：
+1. **Frontend (Vercel)**: 使用 GitHub 整合自動部署，負責提供 Web UI 與靜態資源，並享有全球 CDN 加速。
+2. **Backend (Oracle Kubernetes Engine, OKE)**: 
+   - 透過 GitHub Actions 進行 CI/CD。
+   - 程式碼 Push 後自動打包為 Docker Image 並發布至 GHCR。
+   - 透過 ArgoCD 自動同步 Kubernetes 部署檔 (Deployment, Service, Ingress)。
+   - 提供 24 小時不間斷的 WebSocket 服務，供 Frontend 與 Robot Firmware 進行雙向通訊。
 
 ## 3. 資料流流程
 
