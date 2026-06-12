@@ -10,7 +10,7 @@ interface SettingsModalProps {
 export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
   const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
-  const [backendUrl, setBackendUrl] = useState('ws://localhost:3001');
+  const [backendUrl, setBackendUrl] = useState('wss://chibi.carrot-atelier.online');
   const [enableMachineOps, setEnableMachineOps] = useState(false);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
             className="input-glass"
             value={backendUrl}
             onChange={(e) => setBackendUrl(e.target.value)}
-            placeholder="ws://192.168.1.100:3001"
+            placeholder="wss://chibi.carrot-atelier.online"
           />
         </div>
 

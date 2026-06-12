@@ -18,7 +18,7 @@ export default function App() {
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
 
   // Load Settings (no longer kept in App state since they are not used here except backendUrl)
-  const [backendUrl, setBackendUrl] = useState(localStorage.getItem('backendUrl') || 'ws://localhost:3001');
+  const [backendUrl, setBackendUrl] = useState(localStorage.getItem('backendUrl') || 'wss://chibi.carrot-atelier.online');
 
   // Camera stream state
   const [cameraImageUrl, setCameraImageUrl] = useState<string | null>(null);

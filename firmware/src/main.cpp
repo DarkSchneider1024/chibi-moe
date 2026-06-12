@@ -60,8 +60,8 @@ const char* ISGR_ROOT_X1_CA = \
 "emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\n" \
 "-----END CERTIFICATE-----\n";
 
-String websocket_host = "192.168.1.100";
-int websocket_port = 3001;
+String websocket_host = "chibi.carrot-atelier.online";
+int websocket_port = 443;
 String websocket_path = "/";
 bool shouldSaveConfig = false;
 
