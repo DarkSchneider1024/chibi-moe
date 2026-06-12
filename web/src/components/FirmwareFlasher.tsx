@@ -230,6 +230,19 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <input 
+              type="checkbox" 
+              id="eraseAll" 
+              checked={eraseAll}
+              onChange={(e) => setEraseAll(e.target.checked)} 
+              style={{ width: '16px', height: '16px', accentColor: 'var(--accent-blue)' }}
+            />
+            <label htmlFor="eraseAll" style={{ fontSize: '0.9rem', color: 'var(--text-primary)', cursor: 'pointer' }}>
+              刷機前清除所有記憶體 (Erase all flash, 清除 WiFi 設定)
+            </label>
+          </div>
+
           <button 
             className="btn-primary" 
             style={{ 
@@ -272,16 +285,6 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
                   <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Firmware (0x10000) - 必填</label>
                   <input type="file" accept=".bin" onChange={(e) => setFirmwareFile(e.target.files?.[0] || null)} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                  <input 
-                    type="checkbox" 
-                    id="eraseAll" 
-                    checked={eraseAll}
-                    onChange={(e) => setEraseAll(e.target.checked)} 
-                  />
-                  <label htmlFor="eraseAll" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>刷機前清除所有記憶體 (Erase all flash, 清除 WiFi 設定)</label>
-                </div>
-                
                 <button 
                   className="btn-primary" 
                   disabled={!isConnected || isFlashing || !firmwareFile} 
