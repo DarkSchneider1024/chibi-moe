@@ -33,12 +33,12 @@ export function CameraView({ imageUrl, isConnected }: CameraViewProps) {
           {!isConnected ? (
             <>
               <CameraOff size={48} style={{ marginBottom: '8px', opacity: 0.5 }} />
-              <p>Camera Offline</p>
+              <p>相機離線 (Camera Offline)</p>
             </>
           ) : (
             <>
               <Camera size={48} style={{ marginBottom: '8px', opacity: 0.5 }} />
-              <p>Waiting for video stream...</p>
+              <p>等待影像傳輸中... (Waiting for video stream...)</p>
             </>
           )}
         </div>
@@ -61,7 +61,7 @@ export function CameraView({ imageUrl, isConnected }: CameraViewProps) {
         {imageUrl && (
           <>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)' }}></div>
-            <span style={{ color: '#fff' }}>LIVE</span>
+            <span style={{ color: '#fff' }}>即時影像 (LIVE)</span>
           </>
         )}
       </div>

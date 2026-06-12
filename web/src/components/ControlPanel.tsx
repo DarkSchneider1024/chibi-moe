@@ -9,9 +9,10 @@ interface ControlPanelProps {
   onOpenSettings: () => void;
   onOpenFirmwareFlasher: () => void;
   onOpenManual: () => void;
+  onConnect: () => void;
 }
 
-export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher, onOpenManual }: ControlPanelProps) {
+export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher, onOpenManual, onConnect }: ControlPanelProps) {
   return (
     <div className="glass-panel" style={{ 
       display: 'flex', 
@@ -26,8 +27,17 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {isConnected ? <Wifi color="var(--success)" size={20} /> : <WifiOff color="var(--danger)" size={20} />}
         <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          {isConnected ? 'Connected' : 'Disconnected'}
+          {isConnected ? '已連線 (Connected)' : '未連線 (Disconnected)'}
         </span>
+        {!isConnected && (
+          <button 
+            className="btn-primary" 
+            onClick={onConnect}
+            style={{ padding: '4px 8px', fontSize: '0.75rem', marginLeft: '8px' }}
+          >
+            重新連線
+          </button>
+        )}
       </div>
 
       <button 
@@ -46,13 +56,13 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
       </button>
 
       <div style={{ display: 'flex', gap: '12px' }}>
-        <button className="btn-icon" onClick={onOpenManual} title="Manual">
+        <button className="btn-icon" onClick={onOpenManual} title="使用手冊 (Manual)">
           <BookOpen size={20} />
         </button>
-        <button className="btn-icon" onClick={onOpenFirmwareFlasher} title="Firmware Flasher">
+        <button className="btn-icon" onClick={onOpenFirmwareFlasher} title="韌體刷機 (Firmware Flasher)">
           <Cpu size={20} />
         </button>
-        <button className="btn-icon" onClick={onOpenSettings} title="Settings">
+        <button className="btn-icon" onClick={onOpenSettings} title="設定 (Settings)">
           <Settings size={20} />
         </button>
       </div>

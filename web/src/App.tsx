@@ -30,7 +30,7 @@ export default function App() {
     });
   }, []);
 
-  const { isConnected, lastMessage, sendMessage } = useWebSocket(backendUrl, handleBinaryMessage);
+  const { isConnected, lastMessage, sendMessage, connect } = useWebSocket(backendUrl, handleBinaryMessage);
   const { isRecording, startRecording, stopRecording } = useAudioRecorder();
   const { isPlaying, playBase64Audio, stopPlaying } = useAudioPlayer();
 
@@ -123,6 +123,7 @@ export default function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenFirmwareFlasher={() => setIsFlasherOpen(true)}
         onOpenManual={() => setIsManualOpen(true)}
+        onConnect={connect}
       />
 
       <SettingsModal 

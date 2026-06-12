@@ -220,12 +220,12 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
           <X size={16} />
         </button>
         
-        <h2 style={{ display: 'flex', alignItems: 'center' }}><Usb style={{ marginRight: '8px' }} /> Firmware Flasher</h2>
+        <h2 style={{ display: 'flex', alignItems: 'center' }}><Usb style={{ marginRight: '8px' }} /> 韌體刷機 (Firmware Flasher)</h2>
         
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>Status: {isConnected ? <span style={{color: 'var(--success)'}}>Connected</span> : <span style={{color: 'var(--danger)'}}>Disconnected</span>}</span>
+          <span>狀態: {isConnected ? <span style={{color: 'var(--success)'}}>已連線</span> : <span style={{color: 'var(--danger)'}}>未連線</span>}</span>
           {!isConnected && (
-            <button className="btn-primary" onClick={handleConnect}>Connect Device</button>
+            <button className="btn-primary" onClick={handleConnect}>連線設備 (Connect Device)</button>
           )}
         </div>
 
@@ -242,7 +242,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
             onClick={handleCloudFlash}
           >
             <CloudDownload size={24} />
-            {isDownloading ? 'Downloading from Cloud...' : (isFlashing ? `Flashing... ${progress}%` : 'Flash Latest Cloud Release')}
+            {isDownloading ? '從雲端下載中...' : (isFlashing ? `刷機中... ${progress}%` : '刷入最新雲端版本 (Flash Latest Cloud Release)')}
           </button>
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
@@ -255,21 +255,21 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
               }}
             >
               {isAdvancedMode ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              Advanced: Manual File Selection
+              進階選項：手動選擇檔案 (Advanced: Manual File Selection)
             </button>
             
             {isAdvancedMode && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', marginTop: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Bootloader (0x0) - Optional</label>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Bootloader (0x0) - 選填</label>
                   <input type="file" accept=".bin" onChange={(e) => setBootloaderFile(e.target.files?.[0] || null)} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Partitions (0x8000) - Optional</label>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Partitions (0x8000) - 選填</label>
                   <input type="file" accept=".bin" onChange={(e) => setPartitionsFile(e.target.files?.[0] || null)} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Firmware (0x10000) - Required</label>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>Firmware (0x10000) - 必填</label>
                   <input type="file" accept=".bin" onChange={(e) => setFirmwareFile(e.target.files?.[0] || null)} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
@@ -279,7 +279,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
                     checked={eraseAll}
                     onChange={(e) => setEraseAll(e.target.checked)} 
                   />
-                  <label htmlFor="eraseAll" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Erase all flash before writing (Wipes WiFi settings)</label>
+                  <label htmlFor="eraseAll" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>刷機前清除所有記憶體 (Erase all flash, 清除 WiFi 設定)</label>
                 </div>
                 
                 <button 
@@ -288,7 +288,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
                   onClick={handleFlash}
                   style={{ opacity: (!isConnected || isFlashing || !firmwareFile) ? 0.5 : 1, marginTop: '8px' }}
                 >
-                  {isFlashing && !isDownloading ? `Flashing... ${progress}%` : 'Start Manual Flash'}
+                  {isFlashing && !isDownloading ? `刷機中... ${progress}%` : '開始手動刷機 (Start Manual Flash)'}
                 </button>
               </div>
             )}

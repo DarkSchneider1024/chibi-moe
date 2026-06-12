@@ -52,11 +52,11 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
           <X size={16} />
         </button>
         
-        <h2 style={{ marginBottom: '24px' }}>Settings</h2>
+        <h2 style={{ marginBottom: '24px' }}>設定 (Settings)</h2>
         
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Backend WebSocket URL
+            後端 WebSocket 網址 (Backend WebSocket URL)
           </label>
           <input 
             type="text"
@@ -69,7 +69,7 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Gemini API Key
+            Gemini API 金鑰 (API Key)
           </label>
           <input 
             type="password"
@@ -82,7 +82,7 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Ollama Endpoint
+            Ollama 伺服器網址 (Endpoint)
           </label>
           <input 
             type="text"
@@ -102,12 +102,12 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
             style={{ width: '18px', height: '18px', accentColor: 'var(--accent-blue)' }}
           />
           <label htmlFor="enableOps" style={{ fontSize: '0.9rem', color: 'var(--text-primary)', cursor: 'pointer' }}>
-            Enable Machine Operations (Actions)
+            啟用機器人動作與表情控制 (Enable Machine Operations)
           </label>
         </div>
 
         <button className="btn-primary" style={{ width: '100%' }} onClick={handleSave}>
-          Save Settings
+          儲存設定 (Save Settings)
         </button>
       </div>
     </div>

@@ -62,5 +62,5 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
     }
   }, []);
 
-  return { isConnected, lastMessage, sendMessage };
+  return { isConnected, lastMessage, sendMessage, connect };
 }
