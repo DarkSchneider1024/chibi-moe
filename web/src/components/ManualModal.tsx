@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { X, BookOpen } from 'lucide-react';
 import firmwareDoc from '../../../../docs/firmware.md?raw';

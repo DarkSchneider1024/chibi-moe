@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { SettingsModal } from './components/SettingsModal';
 import { RobotAvatar } from './components/RobotAvatar';
 import { ControlPanel } from './components/ControlPanel';
-import { ChatLog, ChatMessage } from './components/ChatLog';
+import { ChatLog, type ChatMessage } from './components/ChatLog';
 import { FirmwareFlasher } from './components/FirmwareFlasher';
 import { ManualModal } from './components/ManualModal';
 
@@ -16,9 +16,7 @@ export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
 
-  // Load Settings
-  const [apiKey, setApiKey] = useState(localStorage.getItem('geminiApiKey') || '');
-  const [ollamaEndpoint, setOllamaEndpoint] = useState(localStorage.getItem('ollamaEndpoint') || 'http://localhost:11434');
+  // Load Settings (no longer kept in App state since they are not used here)
 
   const { isConnected, lastMessage, sendMessage } = useWebSocket('ws://localhost:3001');
   const { isRecording, startRecording, stopRecording } = useAudioRecorder();
@@ -77,8 +75,6 @@ export default function App() {
   };
 
   const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean }) => {
-    setApiKey(settings.apiKey);
-    setOllamaEndpoint(settings.ollamaEndpoint);
     // Send updated settings to backend
     sendMessage({ type: 'config', settings });
   };

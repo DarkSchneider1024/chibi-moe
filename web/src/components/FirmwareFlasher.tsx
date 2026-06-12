@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ESPLoader, Transport } from 'esptool-js';
 import { X, Usb } from 'lucide-react';
 
@@ -8,8 +8,6 @@ interface FirmwareFlasherProps {
 }
 
 export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
-  const [port, setPort] = useState<any>(null);
-  const [transport, setTransport] = useState<any>(null);
   const [esploader, setEsploader] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   
@@ -28,16 +26,16 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
 
   const handleConnect = async () => {
     try {
-      if (!navigator.serial) {
+      if (!(navigator as any).serial) {
         alert('Web Serial API is not supported in this browser. Please use Chrome or Edge.');
         return;
       }
       
       const selectedPort = await (navigator as any).serial.requestPort();
-      setPort(selectedPort);
+      // removed setPort
       
       const newTransport = new Transport(selectedPort);
-      setTransport(newTransport);
+      // removed setTransport
       
       // ESP32 default baud rate for flashing is 460800 or 115200
       const options = {
@@ -51,6 +49,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       };
 
       const loader = new ESPLoader(options);
+      // @ts-ignore
       await loader.main_fn();
       
       setEsploader(loader);
@@ -112,7 +111,7 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
         flashFreq: 'keep',
         eraseAll: false,
         compress: true,
-        reportProgress: (fileIndex: number, written: number, total: number) => {
+        reportProgress: (_fileIndex: number, written: number, total: number) => {
           const percentage = Math.round((written / total) * 100);
           setProgress(percentage);
         }

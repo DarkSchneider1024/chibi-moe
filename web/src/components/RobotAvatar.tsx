@@ -1,4 +1,4 @@
-import React from 'react';
+// Removed unused React
 
 interface RobotAvatarProps {
   status: 'idle' | 'listening' | 'speaking' | 'processing';

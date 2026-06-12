@@ -1,4 +1,4 @@
-import React from 'react';
+// Removed unused React
 import { Mic, Square, Settings, Wifi, WifiOff, Cpu, BookOpen } from 'lucide-react';
 
 interface ControlPanelProps {
