@@ -16,9 +16,10 @@ export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
 
-  // Load Settings (no longer kept in App state since they are not used here)
+  // Load Settings (no longer kept in App state since they are not used here except backendUrl)
+  const [backendUrl, setBackendUrl] = useState(localStorage.getItem('backendUrl') || 'ws://localhost:3001');
 
-  const { isConnected, lastMessage, sendMessage } = useWebSocket('ws://localhost:3001');
+  const { isConnected, lastMessage, sendMessage } = useWebSocket(backendUrl);
   const { isRecording, startRecording, stopRecording } = useAudioRecorder();
   const { isPlaying, playBase64Audio, stopPlaying } = useAudioPlayer();
 
@@ -74,7 +75,8 @@ export default function App() {
     }
   };
 
-  const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean }) => {
+  const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean; backendUrl: string }) => {
+    setBackendUrl(settings.backendUrl);
     // Send updated settings to backend
     sendMessage({ type: 'config', settings });
   };

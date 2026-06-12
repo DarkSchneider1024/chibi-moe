@@ -4,20 +4,24 @@ import { X } from 'lucide-react';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean }) => void;
+  onSave: (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean; backendUrl: string }) => void;
 }
 
 export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
   const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
+  const [backendUrl, setBackendUrl] = useState('ws://localhost:3001');
   const [enableMachineOps, setEnableMachineOps] = useState(false);
 
   useEffect(() => {
     const savedApiKey = localStorage.getItem('geminiApiKey');
     const savedEndpoint = localStorage.getItem('ollamaEndpoint');
+    const savedUrl = localStorage.getItem('backendUrl');
     const savedOps = localStorage.getItem('enableMachineOps');
+    
     if (savedApiKey) setApiKey(savedApiKey);
     if (savedEndpoint) setOllamaEndpoint(savedEndpoint);
+    if (savedUrl) setBackendUrl(savedUrl);
     if (savedOps === 'true') setEnableMachineOps(true);
   }, [isOpen]);
 
@@ -26,8 +30,9 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const handleSave = () => {
     localStorage.setItem('geminiApiKey', apiKey);
     localStorage.setItem('ollamaEndpoint', ollamaEndpoint);
+    localStorage.setItem('backendUrl', backendUrl);
     localStorage.setItem('enableMachineOps', enableMachineOps.toString());
-    onSave({ apiKey, ollamaEndpoint, enableMachineOps });
+    onSave({ apiKey, ollamaEndpoint, enableMachineOps, backendUrl });
     onClose();
   };
 
@@ -49,6 +54,19 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
         
         <h2 style={{ marginBottom: '24px' }}>Settings</h2>
         
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            Backend WebSocket URL
+          </label>
+          <input 
+            type="text"
+            className="input-glass"
+            value={backendUrl}
+            onChange={(e) => setBackendUrl(e.target.value)}
+            placeholder="ws://192.168.1.100:3001"
+          />
+        </div>
+
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             Gemini API Key
