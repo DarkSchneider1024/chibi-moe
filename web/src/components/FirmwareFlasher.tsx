@@ -154,7 +154,8 @@ export function FirmwareFlasher({ isOpen, onClose }: FirmwareFlasherProps) {
       
       const downloadFile = async (url: string, name: string) => {
         logMsg(`Downloading ${name}...`);
-        const res = await fetch(url);
+        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const res = await fetch(corsProxyUrl);
         if (!res.ok) throw new Error(`Failed to download ${name}`);
         return await res.arrayBuffer();
       };
