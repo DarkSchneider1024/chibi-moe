@@ -135,11 +135,20 @@ wss.on('connection', (ws) => {
               { inlineData: { mimeType: 'audio/webm', data: base64Audio } }
             ]});
 
-            const response = await ai.models.generateContent({
-              model: 'gemini-1.5-flash',
-              contents: state.history,
-              config: { tools: state.enableMachineOps ? robotTools : undefined }
-            });
+            // Generate response – include tools config only when machine ops are enabled
+            let response;
+            if (state.enableMachineOps) {
+              response = await ai.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: state.history,
+                config: { tools: robotTools }
+              });
+            } else {
+              response = await ai.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: state.history
+              });
+            }
 
             let replyText = response.text || '';
 
@@ -179,11 +188,20 @@ wss.on('connection', (ws) => {
               // Send the result back to Gemini to get the final spoken response
               state.history.push({ role: 'user', parts: functionResponses });
               
-              const finalResponse = await ai.models.generateContent({
+            // Final response – include tools config only when machine ops are enabled
+            let finalResponse;
+            if (state.enableMachineOps) {
+              finalResponse = await ai.models.generateContent({
                 model: 'gemini-1.5-flash',
                 contents: state.history,
-                config: { tools: state.enableMachineOps ? robotTools : undefined }
+                config: { tools: robotTools }
               });
+            } else {
+              finalResponse = await ai.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: state.history
+              });
+            }
 
               replyText = finalResponse.text || '';
               state.history.push({ role: 'model', parts: [{ text: replyText }] });
