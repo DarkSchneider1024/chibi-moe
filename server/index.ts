@@ -215,7 +215,7 @@ wss.on('connection', (ws) => {
         });
 
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.0-preview',
           contents: state.history,
           ...(state.enableMachineOps ? { config: { tools: robotTools as any } } : {}),
         });
@@ -242,7 +242,7 @@ wss.on('connection', (ws) => {
 
           state.history.push({ role: 'user', parts: functionResponses });
           const finalResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.0-preview',
             contents: state.history,
           });
 
