@@ -128,6 +128,39 @@ void syncClockForTls() {
   }
 }
 
+void configureReliableDns() {
+  IPAddress primaryDns(8, 8, 8, 8);
+  IPAddress secondaryDns(1, 1, 1, 1);
+
+  Serial.println("Configuring DNS servers: 8.8.8.8, 1.1.1.1");
+  if (!WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), primaryDns, secondaryDns)) {
+    Serial.println("DNS config failed; continuing with DHCP-provided DNS.");
+  }
+
+  Serial.print("DNS 1: ");
+  Serial.println(WiFi.dnsIP(0));
+  Serial.print("DNS 2: ");
+  Serial.println(WiFi.dnsIP(1));
+}
+
+bool waitForWebSocketDns() {
+  IPAddress resolvedIp;
+
+  for (int attempt = 1; attempt <= 5; attempt++) {
+    Serial.printf("Resolving WebSocket host %s (attempt %d/5)...\n", websocket_host.c_str(), attempt);
+    if (WiFi.hostByName(websocket_host.c_str(), resolvedIp)) {
+      Serial.print("WebSocket host resolved to: ");
+      Serial.println(resolvedIp);
+      return true;
+    }
+
+    delay(1000);
+  }
+
+  Serial.println("WebSocket host DNS resolution failed after retries.");
+  return false;
+}
+
 // Callback notifying us of the need to save config
 void saveConfigCallback () {
   Serial.println("Should save config");
@@ -357,6 +390,7 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   WiFi.setSleep(false);
+  configureReliableDns();
 
   // Save config if it was updated in the captive portal
   if (shouldSaveConfig) {
@@ -372,13 +406,12 @@ void setup() {
   }
 
   // 4. Connect to WebSocket Backend
+  waitForWebSocketDns();
   if (websocket_secure) {
     Serial.println("Using WSS (SSL) for WebSocket connection.");
     syncClockForTls();
     // TODO: Let's Encrypt now uses YR1→Root YR→ISRG Root X1 chain.
     // beginSslWithCA with only ISRG Root X1 fails because nginx doesn't send Root YR.
-    // Using beginSSL (setInsecure) as a pragmatic fix for home IoT use.
-    // Proper fix: add Root YR cert or use a full CA bundle.
     webSocket.beginSSL(websocket_host.c_str(), websocket_port, websocket_path.c_str());
   } else {
     Serial.println("Using WS (non-SSL) for WebSocket connection.");
