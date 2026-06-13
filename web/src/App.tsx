@@ -16,11 +16,7 @@ export default function App() {
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
-
-  // Load Settings (no longer kept in App state since they are not used here except backendUrl)
   const [backendUrl, setBackendUrl] = useState(localStorage.getItem('backendUrl') || 'wss://chibi.carrot-atelier.online');
-
-  // Camera stream state
   const [cameraImageUrl, setCameraImageUrl] = useState<string | null>(null);
 
   const handleBinaryMessage = useCallback((blob: Blob) => {
@@ -34,25 +30,39 @@ export default function App() {
   const { isRecording, startRecording, stopRecording } = useAudioRecorder();
   const { isPlaying, playBase64Audio, stopPlaying } = useAudioPlayer();
 
+  const getSavedSettings = useCallback((url = backendUrl) => ({
+    apiKey: localStorage.getItem('geminiApiKey') || '',
+    ollamaEndpoint: localStorage.getItem('ollamaEndpoint') || 'http://localhost:11434',
+    enableMachineOps: localStorage.getItem('enableMachineOps') === 'true',
+    backendUrl: url,
+  }), [backendUrl]);
+
+  useEffect(() => {
+    if (isConnected) {
+      sendMessage({ type: 'config', settings: getSavedSettings() });
+    }
+  }, [isConnected, sendMessage, getSavedSettings]);
+
   useEffect(() => {
     if (!lastMessage) return;
-    
-    // Handle incoming messages from the backend
+
     if (lastMessage.type === 'text') {
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'robot', text: lastMessage.data }]);
     } else if (lastMessage.type === 'command') {
       let actionText = '';
       if (lastMessage.action === 'robot_move') {
-        actionText = `🤖 執行動作: 移動 (${lastMessage.args.action}, ${lastMessage.args.duration}ms)`;
+        actionText = `Robot move: ${lastMessage.args.action} (${lastMessage.args.duration}ms)`;
       } else if (lastMessage.action === 'robot_expression') {
-        actionText = `🤖 執行表情: ${lastMessage.args.emotion}`;
+        actionText = `Robot expression: ${lastMessage.args.emotion}`;
       }
-      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'robot', text: actionText }]);
+
+      if (actionText) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'robot', text: actionText }]);
+      }
     } else if (lastMessage.type === 'audio_out') {
       setRobotStatus('speaking');
       playBase64Audio(lastMessage.data);
     } else if (lastMessage.type === 'status') {
-      // Backend tells us it's processing
       setRobotStatus(lastMessage.state);
     }
   }, [lastMessage, playBase64Audio]);
@@ -66,11 +76,11 @@ export default function App() {
   useEffect(() => {
     if (isRecording) {
       setRobotStatus('listening');
-      stopPlaying(); // Stop any currently playing audio if user interrupts
+      stopPlaying();
     } else if (!isRecording && robotStatus === 'listening') {
       setRobotStatus('processing');
     }
-  }, [isRecording, stopPlaying]);
+  }, [isRecording, robotStatus, stopPlaying]);
 
   const handleStartRecording = () => {
     startRecording();
@@ -88,8 +98,7 @@ export default function App() {
 
   const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean; backendUrl: string }) => {
     setBackendUrl(settings.backendUrl);
-    // Send updated settings to backend
-    sendMessage({ type: 'config', settings });
+    sendMessage({ type: 'config', settings: getSavedSettings(settings.backendUrl) });
   };
 
   return (
@@ -99,11 +108,14 @@ export default function App() {
       alignItems: 'center',
       minHeight: '100vh',
       padding: '24px',
-      position: 'relative'
+      position: 'relative',
     }}>
-      <h1 style={{ 
-        position: 'absolute', top: '24px', left: '24px', 
-        fontSize: '1.2rem', color: 'var(--text-secondary)' 
+      <h1 style={{
+        position: 'absolute',
+        top: '24px',
+        left: '24px',
+        fontSize: '1.2rem',
+        color: 'var(--text-secondary)',
       }}>
         Chibi-Moe
       </h1>
@@ -112,10 +124,10 @@ export default function App() {
         <RobotAvatar status={robotStatus} />
         <CameraView imageUrl={cameraImageUrl} isConnected={isConnected} />
       </div>
-      
+
       <ChatLog messages={messages} />
 
-      <ControlPanel 
+      <ControlPanel
         isRecording={isRecording}
         isConnected={isConnected}
         onStartRecording={handleStartRecording}
@@ -126,13 +138,13 @@ export default function App() {
         onConnect={connect}
       />
 
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-        onSave={handleSaveSettings} 
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={handleSaveSettings}
       />
 
-      <FirmwareFlasher 
+      <FirmwareFlasher
         isOpen={isFlasherOpen}
         onClose={() => setIsFlasherOpen(false)}
       />

@@ -12,16 +12,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Proxy route to bypass CORS for downloading firmware binaries
+app.get('/healthz', (_req, res) => {
+  res.json({ ok: true });
+});
+
+// Proxy route to bypass CORS for downloading firmware binaries.
 app.get('/proxy', async (req, res) => {
   try {
     const targetUrl = req.query.url as string;
     if (!targetUrl) return res.status(400).send('Missing url parameter');
-    
+
     console.log(`Proxying download: ${targetUrl}`);
     const fetchRes = await fetch(targetUrl);
     if (!fetchRes.ok) return res.status(fetchRes.status).send('Failed to fetch');
-    
+
     const arrayBuffer = await fetchRes.arrayBuffer();
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -35,7 +39,6 @@ app.get('/proxy', async (req, res) => {
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// Store connection state
 interface ClientState {
   geminiApiKey: string;
   ollamaEndpoint: string;
@@ -45,23 +48,69 @@ interface ClientState {
 
 const clients = new Map<WebSocket, ClientState>();
 
-// helper function for TTS
+function sendJson(ws: WebSocket, data: unknown) {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
+}
+
+function broadcastJson(data: unknown, except?: WebSocket) {
+  wss.clients.forEach(client => {
+    if (client !== except) {
+      sendJson(client, data);
+    }
+  });
+}
+
+function buildFirmwareCommand(functionName: string, args: any) {
+  if (functionName === 'robot_move') {
+    const action = String(args?.action || '');
+    const dirMap: Record<string, string> = {
+      move_forward: 'forward',
+      move_backward: 'backward',
+      turn_left: 'left',
+      turn_right: 'right',
+      dance: 'dance',
+      spin_around: 'spin_around',
+    };
+
+    return {
+      type: 'command',
+      action: functionName,
+      args,
+      cmd: 'move',
+      dir: dirMap[action] || action,
+      duration: Number(args?.duration || 0),
+    };
+  }
+
+  if (functionName === 'robot_expression') {
+    return {
+      type: 'command',
+      action: functionName,
+      args,
+      cmd: 'expression',
+      emotion: String(args?.emotion || 'neutral'),
+    };
+  }
+
+  return { type: 'command', action: functionName, args };
+}
+
 async function generateTTS(text: string): Promise<string> {
   try {
-    const base64Audio = await googleTTS.getAudioBase64(text, {
+    return await googleTTS.getAudioBase64(text, {
       lang: 'zh-TW',
       slow: false,
       host: 'https://translate.google.com',
       timeout: 10000,
     });
-    return base64Audio;
   } catch (error) {
     console.error('TTS error', error);
     return '';
   }
 }
 
-// Define Robot Tools
 const robotTools = [{
   functionDeclarations: [
     {
@@ -70,11 +119,14 @@ const robotTools = [{
       parameters: {
         type: Type.OBJECT,
         properties: {
-          action: { type: Type.STRING, enum: ['move_forward', 'move_backward', 'turn_left', 'turn_right', 'dance', 'spin_around'] },
-          duration: { type: Type.INTEGER, description: 'Duration in milliseconds' }
+          action: {
+            type: Type.STRING,
+            enum: ['move_forward', 'move_backward', 'turn_left', 'turn_right', 'dance', 'spin_around'],
+          },
+          duration: { type: Type.INTEGER, description: 'Duration in milliseconds' },
         },
-        required: ['action', 'duration']
-      }
+        required: ['action', 'duration'],
+      },
     },
     {
       name: 'robot_expression',
@@ -82,25 +134,29 @@ const robotTools = [{
       parameters: {
         type: Type.OBJECT,
         properties: {
-          emotion: { type: Type.STRING, enum: ['happy', 'sad', 'angry', 'surprised', 'neutral'] }
+          emotion: { type: Type.STRING, enum: ['happy', 'sad', 'angry', 'surprised', 'neutral'] },
         },
-        required: ['emotion']
-      }
-    }
-  ]
+        required: ['emotion'],
+      },
+    },
+  ],
 }];
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
-  clients.set(ws, { geminiApiKey: '', ollamaEndpoint: 'http://localhost:11434', enableMachineOps: false, history: [] });
+  clients.set(ws, {
+    geminiApiKey: '',
+    ollamaEndpoint: 'http://localhost:11434',
+    enableMachineOps: false,
+    history: [],
+  });
 
   ws.on('message', async (rawMessage, isBinary) => {
     try {
       if (isBinary) {
-        // Binary message (e.g. video frame from ESP32). Broadcast to all other clients.
-        wss.clients.forEach(c => {
-          if (c !== ws && c.readyState === WebSocket.OPEN) {
-            c.send(rawMessage, { binary: true });
+        wss.clients.forEach(client => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(rawMessage, { binary: true });
           }
         });
         return;
@@ -111,127 +167,95 @@ wss.on('connection', (ws) => {
       if (!state) return;
 
       if (msg.type === 'config') {
-        state.geminiApiKey = msg.settings.apiKey;
-        state.ollamaEndpoint = msg.settings.ollamaEndpoint;
-        state.enableMachineOps = msg.settings.enableMachineOps || false;
+        state.geminiApiKey = String(msg.settings?.apiKey || '');
+        state.ollamaEndpoint = String(msg.settings?.ollamaEndpoint || 'http://localhost:11434');
+        state.enableMachineOps = Boolean(msg.settings?.enableMachineOps);
         console.log('Updated config for client. Machine Ops:', state.enableMachineOps);
-      } 
-      else if (msg.type === 'audio') {
-        const base64Audio = msg.data;
-        ws.send(JSON.stringify({ type: 'status', state: 'processing' }));
+        return;
+      }
 
-        if (state.geminiApiKey) {
-          try {
-            const ai = new GoogleGenAI({ apiKey: state.geminiApiKey });
-            
-            let prompt = "你是一個名為 chibi-moe 的可愛機器人伴侶。請簡短、友善、活潑地用繁體中文回覆我的語音訊息。";
-            if (state.enableMachineOps) {
-              prompt += " 若對話情境適合，你可以呼叫工具來控制機器人移動或改變表情！";
-              prompt += " 注意：如果使用者要求你做你不會或硬體無法支援的動作（例如後空翻、飛起來等），請呼叫 robot_move 工具並將 action 設為 'spin_around'，然後在後續的回覆文字說「這個動作我還不會哦，我轉圈圈給你看！」之類的話。";
-            }
-            
-            state.history.push({ role: 'user', parts: [
-              { text: prompt },
-              { inlineData: { mimeType: 'audio/webm', data: base64Audio } }
-            ]});
+      if (msg.type === 'status') {
+        broadcastJson(msg, ws);
+        return;
+      }
 
-            // Generate response – include tools config only when machine ops are enabled
-            let response;
-            if (state.enableMachineOps) {
-              response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: state.history,
-                config: { tools: robotTools }
-              });
-            } else {
-              response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: state.history
-              });
-            }
+      if (msg.type !== 'audio') return;
 
-            let replyText = response.text || '';
+      const base64Audio = String(msg.data || '');
+      sendJson(ws, { type: 'status', state: 'processing' });
 
-            // Clean up the prompt from history to save tokens for next turns
-            state.history[state.history.length - 1].parts[0].text = "[用戶傳送了一段語音]";
+      if (!state.geminiApiKey) {
+        sendJson(ws, { type: 'text', data: 'Please set the Gemini API Key in Settings first.' });
+        sendJson(ws, { type: 'status', state: 'idle' });
+        return;
+      }
 
-            // Handle Function Calls
-            if (response.functionCalls && response.functionCalls.length > 0) {
-              const calls = response.functionCalls;
-              const functionResponses: any[] = [];
-              
-              state.history.push({ role: 'model', parts: calls.map(c => ({ functionCall: c })) });
+      try {
+        const ai = new GoogleGenAI({ apiKey: state.geminiApiKey });
+        let prompt = 'You are chibi-moe, a cute voice assistant. Reply in natural, concise Traditional Chinese.';
 
-              for (const call of calls) {
-                console.log('Function call:', call.name, call.args);
-                
-                // Broadcast command to all connected clients (Robot & Web UI)
-                const cmd = {
-                  type: 'command',
-                  action: call.name,
-                  args: call.args
-                };
-                wss.clients.forEach(c => {
-                  if (c.readyState === WebSocket.OPEN) {
-                    c.send(JSON.stringify(cmd));
-                  }
-                });
-
-                functionResponses.push({
-                  functionResponse: {
-                    name: call.name,
-                    response: { result: `Executed ${call.name} successfully.` }
-                  }
-                });
-              }
-
-              // Send the result back to Gemini to get the final spoken response
-              state.history.push({ role: 'user', parts: functionResponses });
-              
-            // Final response – include tools config only when machine ops are enabled
-            let finalResponse;
-            if (state.enableMachineOps) {
-              finalResponse = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: state.history,
-                config: { tools: robotTools }
-              });
-            } else {
-              finalResponse = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: state.history
-              });
-            }
-
-              replyText = finalResponse.text || '';
-              state.history.push({ role: 'model', parts: [{ text: replyText }] });
-            } else {
-              state.history.push({ role: 'model', parts: [{ text: replyText }] });
-            }
-
-            console.log('Gemini reply:', replyText);
-
-            // Send text reply to client log
-            ws.send(JSON.stringify({ type: 'text', data: replyText }));
-
-            // Generate TTS
-            const ttsBase64 = await generateTTS(replyText);
-            if (ttsBase64) {
-               ws.send(JSON.stringify({ type: 'audio_out', data: ttsBase64 }));
-            } else {
-               ws.send(JSON.stringify({ type: 'status', state: 'idle' }));
-            }
-
-          } catch (e: any) {
-            console.error('Gemini Error:', e);
-            ws.send(JSON.stringify({ type: 'text', data: 'Gemini API 發生錯誤: ' + e.message }));
-            ws.send(JSON.stringify({ type: 'status', state: 'idle' }));
-          }
-        } else {
-          // Fallback
-          ws.send(JSON.stringify({ type: 'text', data: 'Gemini API Key 尚未設定。請先輸入 API Key。' }));
-          ws.send(JSON.stringify({ type: 'status', state: 'idle' }));
+        if (state.enableMachineOps) {
+          prompt += ' If the user asks for movement, dancing, spinning, or expression changes, use the available robot tool. Do not call tools unless the user clearly asks for hardware operation.';
         }
+
+        state.history.push({
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: 'audio/webm', data: base64Audio } },
+          ],
+        });
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-1.5-flash',
+          contents: state.history,
+          ...(state.enableMachineOps ? { config: { tools: robotTools as any } } : {}),
+        });
+
+        let replyText = response.text || '';
+        state.history[state.history.length - 1].parts[0].text = '[Audio message]';
+
+        if (response.functionCalls && response.functionCalls.length > 0) {
+          const calls = response.functionCalls;
+          const functionResponses: any[] = [];
+
+          state.history.push({ role: 'model', parts: calls.map(call => ({ functionCall: call })) });
+
+          for (const call of calls) {
+            console.log('Function call:', call.name, call.args);
+            broadcastJson(buildFirmwareCommand(call.name || '', call.args));
+            functionResponses.push({
+              functionResponse: {
+                name: call.name,
+                response: { result: `Executed ${call.name} successfully.` },
+              },
+            });
+          }
+
+          state.history.push({ role: 'user', parts: functionResponses });
+          const finalResponse = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: state.history,
+          });
+
+          replyText = finalResponse.text || '';
+        }
+
+        state.history.push({ role: 'model', parts: [{ text: replyText }] });
+        console.log('Gemini reply:', replyText);
+
+        sendJson(ws, { type: 'text', data: replyText });
+
+        const ttsBase64 = await generateTTS(replyText);
+        if (ttsBase64) {
+          sendJson(ws, { type: 'audio_out', data: ttsBase64 });
+        } else {
+          sendJson(ws, { type: 'status', state: 'idle' });
+        }
+      } catch (e: any) {
+        console.error('Gemini Error:', e);
+        sendJson(ws, { type: 'text', data: 'Gemini API error: ' + e.message });
+        sendJson(ws, { type: 'status', state: 'idle' });
       }
     } catch (e) {
       console.error('Error handling WS message', e);

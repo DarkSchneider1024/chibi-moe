@@ -6,6 +6,7 @@
 #include <LittleFS.h>
 #include <WiFiManager.h>
 #include "esp_camera.h"
+#include <time.h>
 
 // GOOUUU ESP32-S3-CAM pin configuration
 #define PWDN_GPIO_NUM     -1
@@ -63,11 +64,66 @@ const char* ISGR_ROOT_X1_CA = \
 String websocket_host = "chibi.carrot-atelier.online";
 int websocket_port = 443;
 String websocket_path = "/";
+bool websocket_secure = true;
 bool shouldSaveConfig = false;
 
 WebSocketsClient webSocket;
 bool camera_initialized = false;
 unsigned long last_frame_time = 0;
+
+void normalizeWebSocketConfig() {
+  websocket_host.trim();
+  websocket_path.trim();
+
+  if (websocket_host.startsWith("wss://")) {
+    websocket_secure = true;
+    websocket_port = websocket_port == 80 ? 443 : websocket_port;
+    websocket_host = websocket_host.substring(6);
+  } else if (websocket_host.startsWith("ws://")) {
+    websocket_secure = false;
+    websocket_port = websocket_port == 443 ? 80 : websocket_port;
+    websocket_host = websocket_host.substring(5);
+  } else {
+    websocket_secure = websocket_port == 443;
+  }
+
+  int slashIndex = websocket_host.indexOf('/');
+  if (slashIndex >= 0) {
+    websocket_path = websocket_host.substring(slashIndex);
+    websocket_host = websocket_host.substring(0, slashIndex);
+  }
+
+  int colonIndex = websocket_host.lastIndexOf(':');
+  if (colonIndex > 0) {
+    websocket_port = websocket_host.substring(colonIndex + 1).toInt();
+    websocket_host = websocket_host.substring(0, colonIndex);
+    websocket_secure = websocket_port == 443;
+  }
+
+  if (websocket_path.length() == 0 || websocket_path[0] != '/') {
+    websocket_path = "/" + websocket_path;
+  }
+}
+
+void syncClockForTls() {
+  configTime(0, 0, "pool.ntp.org", "time.google.com", "time.cloudflare.com");
+
+  Serial.print("Waiting for NTP time sync");
+  time_t now = time(nullptr);
+  unsigned long startedAt = millis();
+  while (now < 1700000000 && millis() - startedAt < 15000) {
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+  }
+  Serial.println();
+
+  if (now < 1700000000) {
+    Serial.println("NTP sync timed out; WSS certificate validation may fail.");
+  } else {
+    Serial.println("NTP time synchronized.");
+  }
+}
 
 // Callback notifying us of the need to save config
 void saveConfigCallback () {
@@ -90,8 +146,12 @@ void loadConfig() {
           if (doc.containsKey("websocket_port")) {
              websocket_port = doc["websocket_port"].as<int>();
           }
+          if (doc.containsKey("websocket_path")) {
+             websocket_path = doc["websocket_path"].as<String>();
+          }
+          normalizeWebSocketConfig();
           Serial.println("Config loaded successfully:");
-          Serial.println("WS Host: " + websocket_host + ":" + String(websocket_port));
+          Serial.println("WS Host: " + websocket_host + ":" + String(websocket_port) + websocket_path);
         }
         file.close();
       }
@@ -107,6 +167,7 @@ void saveConfig() {
   StaticJsonDocument<512> doc;
   doc["websocket_host"] = websocket_host;
   doc["websocket_port"] = websocket_port;
+  doc["websocket_path"] = websocket_path;
 
   File file = LittleFS.open("/config.json", "w");
   if (!file) {
@@ -147,7 +208,7 @@ void initCamera() {
     config.jpeg_quality = 10;
     config.fb_count = 2;
   } else {
-    config.frame_size = FRAMESIZE_SVGA;
+    config.frame_size = FRAMESIZE_QVGA;
     config.jpeg_quality = 12;
     config.fb_count = 1;
   }
@@ -186,20 +247,30 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         if (msgType == "command") {
           String cmd = doc["cmd"].as<String>();
           String dir = doc["dir"].as<String>();
+          String emotion = doc["emotion"].as<String>();
+          int duration = doc["duration"] | 0;
           
           Serial.println("--- ROBOT ACTION ---");
           Serial.println("Command: " + cmd);
           Serial.println("Direction: " + dir);
+          Serial.println("Duration: " + String(duration));
           
-          // Add motor control logic here based on cmd and dir
           if (cmd == "move") {
              if (dir == "forward") {
-                // Motor forward
                 Serial.println("=> Moving Forward");
+             } else if (dir == "backward") {
+                Serial.println("=> Moving Backward");
+             } else if (dir == "left") {
+                Serial.println("=> Turning Left");
+             } else if (dir == "right") {
+                Serial.println("=> Turning Right");
+             } else if (dir == "dance") {
+                Serial.println("=> Dancing");
              } else if (dir == "spin_around") {
-                // Spin around fallback
                 Serial.println("=> Spinning Around");
              }
+          } else if (cmd == "expression") {
+             Serial.println("=> Expression: " + emotion);
           }
           Serial.println("--------------------");
         }
@@ -251,29 +322,33 @@ void setup() {
   Serial.println("\nWiFi Connected!");
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
+  WiFi.setSleep(false);
 
   // Save config if it was updated in the captive portal
   if (shouldSaveConfig) {
     websocket_host = custom_server_ip.getValue();
     websocket_port = atoi(custom_server_port.getValue());
+    normalizeWebSocketConfig();
     saveConfig();
   } else {
     // Overwrite the in-memory variable in case it was changed without triggering save
     websocket_host = custom_server_ip.getValue(); 
     websocket_port = atoi(custom_server_port.getValue());
+    normalizeWebSocketConfig();
   }
 
   // 4. Connect to WebSocket Backend
-  if (websocket_port == 443) {
+  if (websocket_secure) {
     Serial.println("Using WSS (SSL) for WebSocket connection.");
-    // For ESP32, beginSslWithCA is available in WebSocketsClient for WSS connections with root CA validation
-    webSocket.beginSslWithCA(websocket_host.c_str(), websocket_port, websocket_path.c_str(), ISGR_ROOT_X1_CA, "wss");
+    syncClockForTls();
+    webSocket.beginSslWithCA(websocket_host.c_str(), websocket_port, websocket_path.c_str(), ISGR_ROOT_X1_CA);
   } else {
     Serial.println("Using WS (non-SSL) for WebSocket connection.");
     webSocket.begin(websocket_host.c_str(), websocket_port, websocket_path.c_str());
   }
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
+  webSocket.enableHeartbeat(15000, 3000, 2);
   
   Serial.println("WebSocket initialization complete.");
 }
