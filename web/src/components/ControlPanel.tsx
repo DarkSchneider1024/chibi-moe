@@ -17,16 +17,17 @@ interface ControlPanelProps {
 export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher, onOpenManual, onConnect, cameraEnabled, onToggleCamera }: ControlPanelProps) {
   return (
     <div className="glass-panel" style={{ 
-      display: 'flex', 
+      display: 'grid', 
+      gridTemplateColumns: '1fr auto 1fr',
       alignItems: 'center', 
-      justifyContent: 'space-between',
       padding: '16px 24px',
       marginTop: 'auto',
       marginBottom: '24px',
       width: '100%',
-      maxWidth: '600px'
+      maxWidth: '600px',
+      gap: '8px'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifySelf: 'start' }}>
         {isConnected ? <Wifi color="var(--success)" size={20} /> : <WifiOff color="var(--danger)" size={20} />}
         <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
           {isConnected ? '已連線 (Connected)' : '未連線 (Disconnected)'}
@@ -57,7 +58,7 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
         {isRecording ? <Square size={24} fill="currentColor" /> : <Mic size={28} />}
       </button>
 
-      <div style={{ display: 'flex', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: '12px', justifySelf: 'end' }}>
         <button className="btn-icon" onClick={onToggleCamera} title={cameraEnabled ? "關閉影像 (Disable Camera)" : "開啟影像 (Enable Camera)"}>
           {cameraEnabled ? <Camera size={20} /> : <CameraOff size={20} color="var(--danger)" />}
         </button>
