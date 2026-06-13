@@ -167,6 +167,8 @@ NetworkError: Failed to execute 'open' on 'SerialPort': Failed to open serial po
 
 如果 Web Serial 燒錄失敗，建議改用 PlatformIO：
 
+快速燒錄指令：
+
 ```powershell
 cd c:\GitRoot\CarrotStudio\chibi-moe\firmware
 C:\Users\gueiw\.platformio\penv\Scripts\pio.exe run -e esp32s3 -t upload --upload-port COM4
