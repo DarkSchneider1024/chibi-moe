@@ -15,13 +15,13 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-06-13 07:24:41"
+        deployed-at: "2026-06-13 08:24:57"
     spec:
       imagePullSecrets:
         - name: ocirsecret
       containers:
       - name: server
-        image: ghcr.io/darkschneider1024/chibi-moe-server:3b5a828872ee61ca5d01cefd53cb61ba03ea1521
+        image: ghcr.io/darkschneider1024/chibi-moe-server:4e8390a53ebe9b20984a3bdbaf6a55157fb9d63b
         imagePullPolicy: Always
         ports:
         - containerPort: 3001
