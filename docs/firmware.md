@@ -1,10 +1,10 @@
-# 🤖 Chibi-Moe 機器人韌體燒錄標準作業程序 (SOP)
+# Chibi-Moe 機器人韌體燒錄標準作業程序 (SOP)
 
 這份 SOP 將指導您如何一步一步將編譯好的韌體（Firmware）燒錄到您的 Chibi-Moe 機器人硬體（以 ESP32 晶片為例）。
 
 ---
 
-## 🛠️ 第一階段：事前準備
+## 第一階段：事前準備
 
 ### 1. 硬體準備
 - **Chibi-Moe 機器人主板** (ESP32 等相容開發板)
@@ -21,7 +21,7 @@
 
 ---
 
-## 🚀 第二階段：開始燒錄 (請選擇一種最適合您的方法)
+## 第二階段：開始燒錄 (請選擇一種最適合您的方法)
 
 ### 方法 A：使用網頁一鍵雲端更新 (Web Serial) - 🌟 最推薦新手！
 
@@ -79,10 +79,123 @@
 
 ---
 
-## 💡 第三階段：常見問題排除 (Troubleshooting)
+## 第三階段：常見問題排除 (Troubleshooting)
 
 | 遇到的狀況 | 可能的原因 | 解決方案 |
 | :--- | :--- | :--- |
 | **找不到 COM Port** | 線材問題或缺少驅動程式 | 1. 換一條確定有資料傳輸功能的 USB 線。<br>2. 安裝 CH340 或 CP2102 的 USB-to-Serial 驅動程式。 |
 | **燒錄到一半出現 Timeout / 失敗** | 進入燒錄模式失敗 | 重新插拔 USB 線。在按下「開始燒錄」時，**按住板子上的 `BOOT` 按鈕**，直到畫面出現進度條再放開。 |
 | **燒錄成功，但機器人沒反應** | 供電不足或未重新啟動 | 1. 按下板子上的 `EN` 或 `RST` 按鈕重新啟動。<br>2. 確保 USB 供電足夠驅動機器人馬達或喇叭。 |
+---
+
+## 機器人 Debug 指南
+
+### 1. 開啟 Serial Monitor
+
+如果 PowerShell 找不到 `pio` 指令，請直接使用 PlatformIO 的完整路徑：
+
+```powershell
+cd c:\GitRoot\CarrotStudio\chibi-moe\firmware
+C:\Users\gueiw\.platformio\penv\Scripts\pio.exe device monitor -b 115200
+```
+
+如果有多個序列埠，先列出目前裝置：
+
+```powershell
+C:\Users\gueiw\.platformio\penv\Scripts\pio.exe device list
+```
+
+再指定正確的序列埠，例如：
+
+```powershell
+C:\Users\gueiw\.platformio\penv\Scripts\pio.exe device monitor -p COM4 -b 115200
+```
+
+Monitor 開啟後，按一下板子上的 `RESET` / `EN`，讓開機 log 重新印出來。
+
+### 2. 正常連線時應看到的 log
+
+只有看到類似以下內容，才代表機器人已經連上後端：
+
+```text
+WiFi Connected!
+Camera initialized successfully!
+Configuring DNS servers: 8.8.8.8, 1.1.1.1
+Resolving WebSocket host chibi.carrot-atelier.online (attempt 1/5)...
+WebSocket host resolved to: 141.147.162.214
+Using WSS (SSL) for WebSocket connection.
+[WSc] Connected to url: /
+```
+
+如果網站後端狀態顯示 `robot.connected = false`，請優先檢查 Serial Monitor。
+
+### 3. DNS 解析失敗
+
+如果看到以下錯誤，代表 ESP32 無法解析後端網域：
+
+```text
+hostByName(): DNS Failed for chibi.carrot-atelier.online
+```
+
+Firmware 會設定外部 DNS 作為 fallback：
+
+```text
+8.8.8.8
+1.1.1.1
+```
+
+修改 firmware 程式後，必須重新燒錄 ESP32。推到 Git 不會自動更新實體板子。
+
+### 4. Web Serial 開啟序列埠失敗
+
+如果網頁燒錄出現：
+
+```text
+NetworkError: Failed to execute 'open' on 'SerialPort': Failed to open serial port.
+```
+
+通常代表 `COM4` 已經被其他程式佔用。
+
+處理方式：
+
+1. 在 PlatformIO Serial Monitor 視窗按 `Ctrl+C` 關閉 monitor。
+2. 關閉 Arduino IDE Serial Monitor 或其他序列埠工具。
+3. 拔掉 ESP32 USB，再重新插上。
+4. 回到網頁重新燒錄，並選擇正確的 `COM` port。
+
+### 5. 用 PlatformIO 重新燒錄
+
+如果 Web Serial 燒錄失敗，建議改用 PlatformIO：
+
+```powershell
+cd c:\GitRoot\CarrotStudio\chibi-moe\firmware
+C:\Users\gueiw\.platformio\penv\Scripts\pio.exe run -e esp32s3 -t upload --upload-port COM4
+```
+
+如果 upload 連不上，按住板子 `BOOT`，開始 upload，看到開始寫入後再放開 `BOOT`。
+
+燒錄完成後，重新開啟 Serial Monitor：
+
+```powershell
+C:\Users\gueiw\.platformio\penv\Scripts\pio.exe device monitor -p COM4 -b 115200
+```
+
+### 6. 後端狀態檢查
+
+打開：
+
+```text
+https://chibi.carrot-atelier.online/status
+```
+
+重點欄位：
+
+```text
+web.connected
+robot.connected
+robot.lastFrameAt
+robot.frameCount
+logs
+```
+
+如果 `web.connected = true` 但 `robot.connected = false`，代表網站已連上後端，但 ESP32 尚未連上。
