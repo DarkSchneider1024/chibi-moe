@@ -40,13 +40,74 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 interface ClientState {
+  role: 'unknown' | 'web' | 'robot';
   geminiApiKey: string;
   ollamaEndpoint: string;
   enableMachineOps: boolean;
   history: any[];
+  connectedAt: string;
+  lastSeenAt: string;
+  lastFrameAt?: string;
+  binaryFrameCount: number;
 }
 
 const clients = new Map<WebSocket, ClientState>();
+const serverLogs: Array<{ time: string; level: 'info' | 'warn' | 'error'; message: string }> = [];
+const MAX_SERVER_LOGS = 200;
+
+function getClientCounts() {
+  let web = 0;
+  let robot = 0;
+  let unknown = 0;
+
+  clients.forEach(state => {
+    if (state.role === 'web') web += 1;
+    else if (state.role === 'robot') robot += 1;
+    else unknown += 1;
+  });
+
+  return { web, robot, unknown };
+}
+
+function getLastRobotFrameAt() {
+  let lastFrameAt = '';
+  clients.forEach(state => {
+    if (state.role !== 'robot' || !state.lastFrameAt) return;
+    if (!lastFrameAt || state.lastFrameAt > lastFrameAt) {
+      lastFrameAt = state.lastFrameAt;
+    }
+  });
+  return lastFrameAt;
+}
+
+function getRobotFrameCount() {
+  let frameCount = 0;
+  clients.forEach(state => {
+    if (state.role === 'robot') {
+      frameCount += state.binaryFrameCount;
+    }
+  });
+  return frameCount;
+}
+
+function getServerStatus() {
+  const counts = getClientCounts();
+  return {
+    type: 'backend_status',
+    web: {
+      connected: counts.web > 0,
+      count: counts.web,
+    },
+    robot: {
+      connected: counts.robot > 0,
+      count: counts.robot,
+      lastFrameAt: getLastRobotFrameAt(),
+      frameCount: getRobotFrameCount(),
+    },
+    unknownClients: counts.unknown,
+    updatedAt: new Date().toISOString(),
+  };
+}
 
 function sendJson(ws: WebSocket, data: unknown) {
   if (ws.readyState === WebSocket.OPEN) {
@@ -61,6 +122,51 @@ function broadcastJson(data: unknown, except?: WebSocket) {
     }
   });
 }
+
+function sendToWebClients(data: unknown) {
+  clients.forEach((state, client) => {
+    if (state.role === 'web') {
+      sendJson(client, data);
+    }
+  });
+}
+
+function broadcastServerStatus() {
+  sendToWebClients(getServerStatus());
+}
+
+function recordLog(level: 'info' | 'warn' | 'error', message: string) {
+  const entry = { time: new Date().toISOString(), level, message };
+  serverLogs.push(entry);
+  if (serverLogs.length > MAX_SERVER_LOGS) {
+    serverLogs.splice(0, serverLogs.length - MAX_SERVER_LOGS);
+  }
+
+  const line = `[${entry.time}] ${message}`;
+  if (level === 'error') console.error(line);
+  else if (level === 'warn') console.warn(line);
+  else console.log(line);
+
+  sendToWebClients({ type: 'backend_log', entry });
+}
+
+function setClientRole(ws: WebSocket, role: ClientState['role']) {
+  const state = clients.get(ws);
+  if (!state || state.role === role) return;
+
+  const previousRole = state.role;
+  state.role = role;
+  state.lastSeenAt = new Date().toISOString();
+  recordLog('info', `Client role changed: ${previousRole} -> ${role}`);
+  broadcastServerStatus();
+}
+
+app.get('/status', (_req, res) => {
+  res.json({
+    ...getServerStatus(),
+    logs: serverLogs,
+  });
+});
 
 function buildFirmwareCommand(functionName: string, args: any) {
   if (functionName === 'robot_move') {
@@ -143,46 +249,73 @@ const robotTools = [{
 }];
 
 wss.on('connection', (ws) => {
-  console.log('Client connected');
+  const now = new Date().toISOString();
+  recordLog('info', 'Client connected');
   clients.set(ws, {
+    role: 'unknown',
     geminiApiKey: '',
     ollamaEndpoint: 'http://localhost:11434',
     enableMachineOps: false,
     history: [],
+    connectedAt: now,
+    lastSeenAt: now,
+    binaryFrameCount: 0,
   });
+  broadcastServerStatus();
 
   ws.on('message', async (rawMessage, isBinary) => {
     try {
+      const state = clients.get(ws);
+      if (state) {
+        state.lastSeenAt = new Date().toISOString();
+      }
+
       if (isBinary) {
-        console.log(`[Binary] Received ${rawMessage instanceof Buffer ? (rawMessage as Buffer).length : 'unknown'} bytes from client, broadcasting to ${wss.clients.size - 1} other clients`);
-        wss.clients.forEach(client => {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
+        if (state) {
+          if (state.role !== 'robot') {
+            setClientRole(ws, 'robot');
+          }
+
+          state.binaryFrameCount += 1;
+          state.lastFrameAt = new Date().toISOString();
+          if (state.binaryFrameCount === 1 || state.binaryFrameCount % 100 === 0) {
+            recordLog('info', `Robot video frame received: ${rawMessage instanceof Buffer ? (rawMessage as Buffer).length : 'unknown'} bytes, total ${state.binaryFrameCount}`);
+          }
+        }
+
+        clients.forEach((clientState, client) => {
+          if (client !== ws && clientState.role === 'web' && client.readyState === WebSocket.OPEN) {
             client.send(rawMessage, { binary: true });
           }
         });
+        broadcastServerStatus();
         return;
       }
 
       const msg = JSON.parse(rawMessage.toString());
-      const state = clients.get(ws);
       if (!state) return;
 
       if (msg.type === 'config') {
+        setClientRole(ws, 'web');
         state.geminiApiKey = String(msg.settings?.apiKey || '');
         state.ollamaEndpoint = String(msg.settings?.ollamaEndpoint || 'http://localhost:11434');
         state.enableMachineOps = Boolean(msg.settings?.enableMachineOps);
-        console.log('Updated config for client. Machine Ops:', state.enableMachineOps);
+        recordLog('info', `Web config updated. Machine Ops: ${state.enableMachineOps}`);
+        sendJson(ws, getServerStatus());
+        sendJson(ws, { type: 'backend_log_snapshot', logs: serverLogs });
         return;
       }
 
       if (msg.type === 'status') {
-        console.log('[Robot] Status received:', JSON.stringify(msg));
+        setClientRole(ws, 'robot');
+        recordLog('info', `[Robot] Status received: ${JSON.stringify(msg)}`);
         broadcastJson(msg, ws);
+        broadcastServerStatus();
         return;
       }
 
       if (msg.type === 'camera_control') {
-        console.log('[UI] Camera control:', msg.enabled);
+        recordLog('info', `[UI] Camera control: ${msg.enabled}`);
         broadcastJson(msg, ws); // broadcast to ESP32
         return;
       }
@@ -230,7 +363,7 @@ wss.on('connection', (ws) => {
           state.history.push({ role: 'model', parts: calls.map(call => ({ functionCall: call })) });
 
           for (const call of calls) {
-            console.log('Function call:', call.name, call.args);
+            recordLog('info', `Function call: ${call.name} ${JSON.stringify(call.args)}`);
             broadcastJson(buildFirmwareCommand(call.name || '', call.args));
             functionResponses.push({
               functionResponse: {
@@ -250,7 +383,7 @@ wss.on('connection', (ws) => {
         }
 
         state.history.push({ role: 'model', parts: [{ text: replyText }] });
-        console.log('Gemini reply:', replyText);
+        recordLog('info', `Gemini reply: ${replyText}`);
 
         sendJson(ws, { type: 'text', data: replyText });
 
@@ -261,22 +394,24 @@ wss.on('connection', (ws) => {
           sendJson(ws, { type: 'status', state: 'idle' });
         }
       } catch (e: any) {
-        console.error('Gemini Error:', e);
+        recordLog('error', `Gemini Error: ${e.message}`);
         sendJson(ws, { type: 'text', data: 'Gemini API error: ' + e.message });
         sendJson(ws, { type: 'status', state: 'idle' });
       }
     } catch (e) {
-      console.error('Error handling WS message', e);
+      recordLog('error', `Error handling WS message: ${e instanceof Error ? e.message : String(e)}`);
     }
   });
 
   ws.on('close', () => {
+    const state = clients.get(ws);
     clients.delete(ws);
-    console.log('Client disconnected');
+    recordLog('info', `Client disconnected${state ? ` (${state.role})` : ''}`);
+    broadcastServerStatus();
   });
 });
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  recordLog('info', `Server listening on port ${PORT}`);
 });

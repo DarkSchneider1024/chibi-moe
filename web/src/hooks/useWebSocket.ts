@@ -19,6 +19,8 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
   const manuallyClosedRef = useRef(false);
+  const reconnectAttemptsRef = useRef(0);
+  const connectRef = useRef<((targetUrl?: string) => void) | null>(null);
 
   const closeCurrentSocket = useCallback(() => {
     manuallyClosedRef.current = true;
@@ -32,6 +34,15 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
   }, []);
 
   const connect = useCallback((targetUrl = url) => {
+    if (!targetUrl) {
+      return;
+    }
+
+    if (reconnectTimerRef.current !== null) {
+      window.clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+
     const current = wsRef.current;
     if (current?.readyState === WebSocket.OPEN || current?.readyState === WebSocket.CONNECTING) {
       return;
@@ -45,6 +56,7 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
 
     ws.onopen = () => {
       console.log('Connected to WebSocket server:', targetUrl);
+      reconnectAttemptsRef.current = 0;
       setIsConnected(true);
     };
 
@@ -55,10 +67,9 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
       }
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket Error:', error);
-      // Do NOT fall back to ws:// — TLS (wss://) is required in production.
-      // Falling back to ws:// would trigger Mixed Content errors on HTTPS pages.
+    ws.onerror = () => {
+      // Do not fall back to ws:// because TLS is required in production.
+      // The browser still emits its native connection failure in DevTools.
       ws.close();
     };
 
@@ -71,12 +82,18 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
       setIsConnected(false);
       if (manuallyClosedRef.current) return;
 
+      reconnectAttemptsRef.current += 1;
+      const reconnectDelay = Math.min(30000, 3000 * reconnectAttemptsRef.current);
       reconnectTimerRef.current = window.setTimeout(() => {
         reconnectTimerRef.current = null;
-        connect(url);
-      }, 3000);
+        connectRef.current?.(url);
+      }, reconnectDelay);
     };
   }, [url, onBinaryMessage]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     closeCurrentSocket();

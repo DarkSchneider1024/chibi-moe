@@ -9,17 +9,38 @@ import { ChatLog, type ChatMessage } from './components/ChatLog';
 import { FirmwareFlasher } from './components/FirmwareFlasher';
 import { ManualModal } from './components/ManualModal';
 import { CameraView } from './components/CameraView';
+import { DEFAULT_BACKEND_URL, normalizeBackendUrl } from './config';
+import { BackendStatusPanel } from './components/BackendStatusPanel';
+import { BackendLogModal, type BackendLogEntry } from './components/BackendLogModal';
+
+interface BackendStatus {
+  web: {
+    connected: boolean;
+    count: number;
+  };
+  robot: {
+    connected: boolean;
+    count: number;
+    lastFrameAt: string;
+    frameCount: number;
+  };
+  unknownClients: number;
+  updatedAt: string;
+}
 
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFlasherOpen, setIsFlasherOpen] = useState(false);
   const [isManualOpen, setIsManualOpen] = useState(false);
+  const [isBackendLogOpen, setIsBackendLogOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [backendStatus, setBackendStatus] = useState<BackendStatus | null>(null);
+  const [backendLogs, setBackendLogs] = useState<BackendLogEntry[]>([]);
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
   const [backendUrl, setBackendUrl] = useState(() => {
-    const saved = localStorage.getItem('backendUrl') || 'wss://chibi.carrot-atelier.online';
-    // Auto-upgrade ws:// → wss:// (TLS is now required)
-    const upgraded = saved.replace(/^ws:\/\//, 'wss://');
+    const saved = localStorage.getItem('backendUrl') || DEFAULT_BACKEND_URL;
+    // Auto-upgrade ws:// to wss:// because TLS is required in production.
+    const upgraded = normalizeBackendUrl(saved);
     if (upgraded !== saved) {
       localStorage.setItem('backendUrl', upgraded);
     }
@@ -55,7 +76,13 @@ export default function App() {
   useEffect(() => {
     if (!lastMessage) return;
 
-    if (lastMessage.type === 'text') {
+    if (lastMessage.type === 'backend_status') {
+      setBackendStatus(lastMessage);
+    } else if (lastMessage.type === 'backend_log_snapshot') {
+      setBackendLogs(lastMessage.logs || []);
+    } else if (lastMessage.type === 'backend_log') {
+      setBackendLogs(prev => [...prev.slice(-199), lastMessage.entry]);
+    } else if (lastMessage.type === 'text') {
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'robot', text: lastMessage.data }]);
     } else if (lastMessage.type === 'command') {
       let actionText = '';
@@ -106,8 +133,9 @@ export default function App() {
   };
 
   const handleSaveSettings = (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean; backendUrl: string }) => {
-    setBackendUrl(settings.backendUrl);
-    sendMessage({ type: 'config', settings: getSavedSettings(settings.backendUrl) });
+    const normalizedUrl = normalizeBackendUrl(settings.backendUrl);
+    setBackendUrl(normalizedUrl);
+    sendMessage({ type: 'config', settings: getSavedSettings(normalizedUrl) });
   };
 
   return (
@@ -128,6 +156,16 @@ export default function App() {
       }}>
         Chibi-Moe
       </h1>
+
+      <BackendStatusPanel
+        webConnected={isConnected}
+        webCount={backendStatus?.web.count || (isConnected ? 1 : 0)}
+        robotConnected={backendStatus?.robot.connected || false}
+        robotCount={backendStatus?.robot.count || 0}
+        lastFrameAt={backendStatus?.robot.lastFrameAt || ''}
+        frameCount={backendStatus?.robot.frameCount || 0}
+        onOpenLogs={() => setIsBackendLogOpen(true)}
+      />
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center', alignItems: 'flex-start', width: '100%' }}>
         <RobotAvatar status={robotStatus} />
@@ -167,6 +205,12 @@ export default function App() {
       <ManualModal
         isOpen={isManualOpen}
         onClose={() => setIsManualOpen(false)}
+      />
+
+      <BackendLogModal
+        isOpen={isBackendLogOpen}
+        logs={backendLogs}
+        onClose={() => setIsBackendLogOpen(false)}
       />
     </div>
   );

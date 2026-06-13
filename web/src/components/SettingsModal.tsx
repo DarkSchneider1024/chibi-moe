@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { DEFAULT_BACKEND_URL, normalizeBackendUrl } from '../config';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,7 +11,7 @@ interface SettingsModalProps {
 export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
   const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
-  const [backendUrl, setBackendUrl] = useState('wss://chibi.carrot-atelier.online');
+  const [backendUrl, setBackendUrl] = useState(DEFAULT_BACKEND_URL);
   const [enableMachineOps, setEnableMachineOps] = useState(false);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
 
     if (savedApiKey) setApiKey(savedApiKey);
     if (savedEndpoint) setOllamaEndpoint(savedEndpoint);
-    if (savedUrl) setBackendUrl(savedUrl);
+    setBackendUrl(normalizeBackendUrl(savedUrl || DEFAULT_BACKEND_URL));
     setEnableMachineOps(savedOps === 'true');
   }, [isOpen]);
 
@@ -30,9 +31,10 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
   const handleSave = () => {
     localStorage.setItem('geminiApiKey', apiKey);
     localStorage.setItem('ollamaEndpoint', ollamaEndpoint);
-    localStorage.setItem('backendUrl', backendUrl);
+    const normalizedUrl = normalizeBackendUrl(backendUrl);
+    localStorage.setItem('backendUrl', normalizedUrl);
     localStorage.setItem('enableMachineOps', enableMachineOps.toString());
-    onSave({ apiKey, ollamaEndpoint, enableMachineOps, backendUrl });
+    onSave({ apiKey, ollamaEndpoint, enableMachineOps, backendUrl: normalizedUrl });
     onClose();
   };
 
