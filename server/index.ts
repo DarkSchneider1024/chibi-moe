@@ -154,6 +154,7 @@ wss.on('connection', (ws) => {
   ws.on('message', async (rawMessage, isBinary) => {
     try {
       if (isBinary) {
+        console.log(`[Binary] Received ${rawMessage instanceof Buffer ? (rawMessage as Buffer).length : 'unknown'} bytes from client, broadcasting to ${wss.clients.size - 1} other clients`);
         wss.clients.forEach(client => {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
             client.send(rawMessage, { binary: true });
@@ -175,6 +176,7 @@ wss.on('connection', (ws) => {
       }
 
       if (msg.type === 'status') {
+        console.log('[Robot] Status received:', JSON.stringify(msg));
         broadcastJson(msg, ws);
         return;
       }
