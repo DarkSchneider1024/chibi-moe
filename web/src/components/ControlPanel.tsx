@@ -1,5 +1,5 @@
 // Removed unused React
-import { Mic, Square, Settings, Wifi, WifiOff, Cpu, BookOpen } from 'lucide-react';
+import { Mic, Square, Settings, Wifi, WifiOff, Cpu, BookOpen, Camera, CameraOff } from 'lucide-react';
 
 interface ControlPanelProps {
   isRecording: boolean;
@@ -10,9 +10,11 @@ interface ControlPanelProps {
   onOpenFirmwareFlasher: () => void;
   onOpenManual: () => void;
   onConnect: () => void;
+  cameraEnabled: boolean;
+  onToggleCamera: () => void;
 }
 
-export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher, onOpenManual, onConnect }: ControlPanelProps) {
+export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher, onOpenManual, onConnect, cameraEnabled, onToggleCamera }: ControlPanelProps) {
   return (
     <div className="glass-panel" style={{ 
       display: 'flex', 
@@ -56,6 +58,9 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
       </button>
 
       <div style={{ display: 'flex', gap: '12px' }}>
+        <button className="btn-icon" onClick={onToggleCamera} title={cameraEnabled ? "關閉影像 (Disable Camera)" : "開啟影像 (Enable Camera)"}>
+          {cameraEnabled ? <Camera size={20} /> : <CameraOff size={20} color="var(--danger)" />}
+        </button>
         <button className="btn-icon" onClick={onOpenManual} title="使用手冊 (Manual)">
           <BookOpen size={20} />
         </button>

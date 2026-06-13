@@ -61,6 +61,8 @@ const char* ISGR_ROOT_X1_CA = \
 "emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\n" \
 "-----END CERTIFICATE-----\n";
 
+#define BOOT_BUTTON_PIN 0    // BOOT button = GPIO0 (built-in on ESP32-S3)
+
 String websocket_host = "chibi.carrot-atelier.online";
 int websocket_port = 443;
 String websocket_path = "/";
@@ -69,6 +71,7 @@ bool shouldSaveConfig = false;
 
 WebSocketsClient webSocket;
 bool camera_initialized = false;
+bool camera_enabled = true; // User toggleable camera stream
 unsigned long last_frame_time = 0;
 
 void normalizeWebSocketConfig() {
@@ -273,6 +276,10 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
              Serial.println("=> Expression: " + emotion);
           }
           Serial.println("--------------------");
+        } else if (msgType == "camera_control") {
+          camera_enabled = doc["enabled"].as<bool>();
+          Serial.print("Camera Stream Enabled: ");
+          Serial.println(camera_enabled ? "true" : "false");
         }
       }
       break;
@@ -290,6 +297,33 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n--- Chibi-Moe Robot Firmware Starting ---");
+
+  // === BOOT Button: Long-press (3s) to reset WiFi + Config ===
+  pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
+  if (digitalRead(BOOT_BUTTON_PIN) == LOW) {
+    Serial.println("[RESET] BOOT button held. Hold 3s to reset WiFi & config...");
+    int held = 0;
+    while (digitalRead(BOOT_BUTTON_PIN) == LOW && held < 30) {
+      delay(100);
+      held++;
+      Serial.print(".");
+    }
+    Serial.println();
+    if (held >= 30) {
+      Serial.println("[RESET] Clearing WiFi credentials and LittleFS config!");
+      WiFiManager wm;
+      wm.resetSettings();          // Clear WiFi SSID/password
+      LittleFS.begin(true);        // Mount
+      LittleFS.remove("/config.json"); // Delete WS config
+      LittleFS.end();
+      Serial.println("[RESET] Done! Rebooting into setup AP: Chibi-Moe-Setup");
+      delay(1000);
+      ESP.restart();
+    } else {
+      Serial.println("[RESET] Button released early. Normal boot.");
+    }
+  }
+
 
   // 1. Load Configuration
   loadConfig();
@@ -341,7 +375,11 @@ void setup() {
   if (websocket_secure) {
     Serial.println("Using WSS (SSL) for WebSocket connection.");
     syncClockForTls();
-    webSocket.beginSslWithCA(websocket_host.c_str(), websocket_port, websocket_path.c_str(), ISGR_ROOT_X1_CA);
+    // TODO: Let's Encrypt now uses YR1→Root YR→ISRG Root X1 chain.
+    // beginSslWithCA with only ISRG Root X1 fails because nginx doesn't send Root YR.
+    // Using beginSSL (setInsecure) as a pragmatic fix for home IoT use.
+    // Proper fix: add Root YR cert or use a full CA bundle.
+    webSocket.beginSSL(websocket_host.c_str(), websocket_port, websocket_path.c_str());
   } else {
     Serial.println("Using WS (non-SSL) for WebSocket connection.");
     webSocket.begin(websocket_host.c_str(), websocket_port, websocket_path.c_str());
@@ -356,8 +394,8 @@ void setup() {
 void loop() {
   webSocket.loop();
   
-  // Stream camera frames if connected
-  if (camera_initialized && webSocket.isConnected()) {
+  // Stream camera frames if connected and enabled
+  if (camera_initialized && camera_enabled && webSocket.isConnected()) {
     // Send 10 frames per second (every 100ms)
     if (millis() - last_frame_time > 100) {
       last_frame_time = millis();

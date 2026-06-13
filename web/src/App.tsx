@@ -26,6 +26,7 @@ export default function App() {
     return upgraded;
   });
   const [cameraImageUrl, setCameraImageUrl] = useState<string | null>(null);
+  const [cameraEnabled, setCameraEnabled] = useState(true);
 
   const handleBinaryMessage = useCallback((blob: Blob) => {
     setCameraImageUrl(prevUrl => {
@@ -144,6 +145,12 @@ export default function App() {
         onOpenFirmwareFlasher={() => setIsFlasherOpen(true)}
         onOpenManual={() => setIsManualOpen(true)}
         onConnect={connect}
+        cameraEnabled={cameraEnabled}
+        onToggleCamera={() => {
+          const newState = !cameraEnabled;
+          setCameraEnabled(newState);
+          sendMessage({ type: 'camera_control', enabled: newState });
+        }}
       />
 
       <SettingsModal

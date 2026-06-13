@@ -181,6 +181,12 @@ wss.on('connection', (ws) => {
         return;
       }
 
+      if (msg.type === 'camera_control') {
+        console.log('[UI] Camera control:', msg.enabled);
+        broadcastJson(msg, ws); // broadcast to ESP32
+        return;
+      }
+
       if (msg.type !== 'audio') return;
 
       const base64Audio = String(msg.data || '');
@@ -209,7 +215,7 @@ wss.on('connection', (ws) => {
         });
 
         const response = await ai.models.generateContent({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.5-flash',
           contents: state.history,
           ...(state.enableMachineOps ? { config: { tools: robotTools as any } } : {}),
         });
@@ -236,7 +242,7 @@ wss.on('connection', (ws) => {
 
           state.history.push({ role: 'user', parts: functionResponses });
           const finalResponse = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             contents: state.history,
           });
 
