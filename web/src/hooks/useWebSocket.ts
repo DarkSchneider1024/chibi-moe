@@ -31,7 +31,7 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
     setIsConnected(false);
   }, []);
 
-  const connect = useCallback((targetUrl = url, usedFallback = false) => {
+  const connect = useCallback((targetUrl = url) => {
     const current = wsRef.current;
     if (current?.readyState === WebSocket.OPEN || current?.readyState === WebSocket.CONNECTING) {
       return;
