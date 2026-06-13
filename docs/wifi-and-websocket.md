@@ -1,27 +1,31 @@
-# WiFi and WebSocket setup
+# WiFi 與 WebSocket 設定
 
-## Recommended portable setup
+## 建議的可攜式設定
 
-Use a phone hotspot as the robot WiFi when you want to carry Chibi-Moe around.
+如果要帶著 Chibi-Moe 到不同地點展示或移動使用，建議讓機器人連手機熱點。
 
-1. Enable the phone hotspot.
-2. Keep the hotspot SSID and password stable.
-3. Power on the robot.
-4. If the robot opens the `Chibi-Moe-Setup` captive portal, connect to it and select the phone hotspot.
-5. Set the backend to `wss://chibi.carrot-atelier.online`.
+1. 開啟手機熱點。
+2. 固定熱點的 SSID 與密碼，不要每次變更。
+3. 開啟機器人電源。
+4. 如果機器人進入 `Chibi-Moe-Setup` 設定熱點，請連上它，並在設定頁選擇手機熱點。
+5. 後端網址設定為 `wss://chibi.carrot-atelier.online`。
 
-This keeps the robot on a network that travels with you, while the backend stays on the public cloud endpoint.
+這樣機器人會跟著手機熱點移動，而後端仍固定使用公開雲端入口。
 
-## Home or lab setup
+## 家用或實驗室設定
 
-Binding the robot to a fixed WiFi is fine for a home, office, or lab where the SSID is always available. It is less convenient for demos or travel because the robot will need WiFiManager setup again when that WiFi is not nearby.
+如果機器人固定在家中、辦公室或實驗室使用，可以直接綁定固定 WiFi。這種方式在 SSID 長期存在時很方便。
 
-## Backend URL rules
+但如果要外出展示或旅行，固定 WiFi 不在附近時，機器人會需要重新進入 WiFiManager 設定流程。
 
-The firmware accepts either a host/port pair or a full WebSocket URL:
+## 後端網址規則
 
-- `chibi.carrot-atelier.online` with port `443`
+Firmware 可以接受主機名稱加 port，也可以接受完整 WebSocket URL。
+
+可用範例：
+
+- `chibi.carrot-atelier.online`，port 使用 `443`
 - `wss://chibi.carrot-atelier.online`
-- `ws://192.168.1.10:3001` for local testing
+- `ws://192.168.1.10:3001`，僅供本機測試
 
-Use `wss://` for production. Use `ws://` only for local testing on a trusted network.
+正式環境請使用 `wss://`。只有在可信任的本機網路測試時，才使用 `ws://`。
