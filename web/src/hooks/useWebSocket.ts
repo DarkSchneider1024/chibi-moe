@@ -57,12 +57,8 @@ export function useWebSocket(url: string, onBinaryMessage?: (data: Blob) => void
 
     ws.onerror = (error) => {
       console.error('WebSocket Error:', error);
-      if (!usedFallback && targetUrl.startsWith('wss://')) {
-        ws.close();
-        wsRef.current = null;
-        connect(targetUrl.replace('wss://', 'ws://'), true);
-        return;
-      }
+      // Do NOT fall back to ws:// — TLS (wss://) is required in production.
+      // Falling back to ws:// would trigger Mixed Content errors on HTTPS pages.
       ws.close();
     };
 

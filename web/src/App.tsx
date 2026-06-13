@@ -16,7 +16,15 @@ export default function App() {
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [robotStatus, setRobotStatus] = useState<'idle' | 'listening' | 'speaking' | 'processing'>('idle');
-  const [backendUrl, setBackendUrl] = useState(localStorage.getItem('backendUrl') || 'wss://chibi.carrot-atelier.online');
+  const [backendUrl, setBackendUrl] = useState(() => {
+    const saved = localStorage.getItem('backendUrl') || 'wss://chibi.carrot-atelier.online';
+    // Auto-upgrade ws:// → wss:// (TLS is now required)
+    const upgraded = saved.replace(/^ws:\/\//, 'wss://');
+    if (upgraded !== saved) {
+      localStorage.setItem('backendUrl', upgraded);
+    }
+    return upgraded;
+  });
   const [cameraImageUrl, setCameraImageUrl] = useState<string | null>(null);
 
   const handleBinaryMessage = useCallback((blob: Blob) => {
