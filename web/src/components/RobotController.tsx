@@ -15,7 +15,6 @@ interface RobotControllerProps {
   isRecording: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  onSendCommand: (msg: any) => void;
   backendUrl: string;
   cameraEnabled: boolean;
   onToggleCamera: () => void;
@@ -43,7 +42,6 @@ export function RobotController({
   isRecording,
   onStartRecording,
   onStopRecording,
-  onSendCommand,
   cameraEnabled,
   onToggleCamera,
   snapshots,

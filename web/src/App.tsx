@@ -194,9 +194,6 @@ export default function App() {
     sendMessage({ type: 'camera_control', enabled: newState });
   }, [cameraEnabled, sendMessage]);
 
-  const handleSendCommand = useCallback((msg: any) => {
-    sendMessage(msg);
-  }, [sendMessage]);
 
   return (
     <div style={{
@@ -377,7 +374,6 @@ export default function App() {
         isRecording={isRecording}
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
-        onSendCommand={handleSendCommand}
         backendUrl={backendUrl}
         cameraEnabled={cameraEnabled}
         onToggleCamera={handleToggleCamera}

@@ -19,7 +19,7 @@ const updateSW = registerSW({
   onOfflineReady() {
     console.log('[PWA] App is ready for offline use.')
   },
-  onRegisteredSW(swUrl, registration) {
+  onRegisteredSW(swUrl: string, registration: ServiceWorkerRegistration | undefined) {
     if (!registration) return
     // Check for updates every 60 seconds
     setInterval(() => {
@@ -27,7 +27,7 @@ const updateSW = registerSW({
     }, 60 * 1000)
     console.log('[PWA] Service worker registered:', swUrl)
   },
-  onRegisterError(error) {
+  onRegisterError(error: any) {
     console.error('[PWA] Service worker registration error:', error)
   },
 })
