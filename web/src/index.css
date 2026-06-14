@@ -1,20 +1,20 @@
 :root {
-  /* Color Palette - Neon Dark Mode */
+  /* Color Palette - Kawaii Cute Dark Mode */
   --bg-primary: #0F172A;
   --bg-secondary: #1E293B;
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   
-  --accent-blue: #3B82F6;
-  --accent-purple: #8B5CF6;
-  --accent-glow: rgba(59, 130, 246, 0.5);
+  --accent-blue: #60A5FA;       /* Soft pastel blue */
+  --accent-purple: #F472B6;     /* Cute pastel pink/purple */
+  --accent-glow: rgba(244, 114, 182, 0.45);
   
   --glass-bg: rgba(30, 41, 59, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
 
-  --danger: #EF4444;
-  --success: #10B981;
+  --danger: #F43F5E;            /* Soft rose/red */
+  --success: #34D399;           /* Soft pastel emerald */
 }
 
 * {
@@ -32,8 +32,8 @@ body {
   flex-direction: column;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+    radial-gradient(circle at 15% 50%, rgba(96, 165, 250, 0.12), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.12), transparent 25%);
 }
 
 #root {
@@ -56,13 +56,13 @@ body {
 /* Animations */
 @keyframes pulse-glow {
   0% { box-shadow: 0 0 0 0 var(--accent-glow); }
-  70% { box-shadow: 0 0 20px 15px rgba(59, 130, 246, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  70% { box-shadow: 0 0 20px 15px rgba(244, 114, 182, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0); }
 }
 
 @keyframes float {
   0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-8px); }
   100% { transform: translateY(0px); }
 }
 

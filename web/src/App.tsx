@@ -275,15 +275,20 @@ export default function App() {
           width: '56px',
           height: '56px',
           borderRadius: '16px',
-          background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))',
+          background: 'rgba(255, 255, 255, 0.1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '1.6rem',
           flexShrink: 0,
-          boxShadow: '0 4px 16px rgba(59,130,246,0.3)',
+          overflow: 'hidden',
+          boxShadow: '0 4px 16px rgba(244,114,182,0.3)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
         }}>
-          🤖
+          <img 
+            src="/image/cute_robot_avatar.png" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            alt="Cute Robot" 
+          />
         </div>
 
         {/* Text */}
