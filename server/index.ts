@@ -131,6 +131,17 @@ function sendToWebClients(data: unknown) {
   });
 }
 
+function sendToRobotClients(data: unknown): number {
+  let sent = 0;
+  clients.forEach((state, client) => {
+    if (state.role === 'robot' && client.readyState === WebSocket.OPEN) {
+      sendJson(client, data);
+      sent++;
+    }
+  });
+  return sent;
+}
+
 function broadcastServerStatus() {
   sendToWebClients(getServerStatus());
 }
@@ -166,6 +177,56 @@ app.get('/status', (_req, res) => {
     ...getServerStatus(),
     logs: serverLogs,
   });
+});
+
+// ===== REST API for Robot Control =====
+// These endpoints allow external clients (e.g. Vercel frontend) to control
+// the robot via HTTP instead of WebSocket.
+
+app.post('/api/robot/move', (req, res) => {
+  const { action, duration = 500 } = req.body || {};
+  const validActions = ['move_forward', 'move_backward', 'turn_left', 'turn_right', 'dance', 'spin_around'];
+
+  if (!action || !validActions.includes(action)) {
+    return res.status(400).json({
+      error: 'Invalid action',
+      validActions,
+    });
+  }
+
+  const cmd = buildFirmwareCommand('robot_move', { action, duration: Number(duration) });
+  const sent = sendToRobotClients(cmd);
+  sendToWebClients(cmd); // Also notify web clients for chat log
+
+  recordLog('info', `[API] robot/move: ${action} ${duration}ms → ${sent} robot(s)`);
+  res.json({ ok: true, action, duration, robotsReached: sent });
+});
+
+app.post('/api/robot/stop', (_req, res) => {
+  const cmd = buildFirmwareCommand('robot_move', { action: 'stop', duration: 0 });
+  const sent = sendToRobotClients(cmd);
+
+  recordLog('info', `[API] robot/stop → ${sent} robot(s)`);
+  res.json({ ok: true, action: 'stop', robotsReached: sent });
+});
+
+app.post('/api/robot/expression', (req, res) => {
+  const { emotion = 'neutral' } = req.body || {};
+  const validEmotions = ['happy', 'sad', 'angry', 'surprised', 'neutral'];
+
+  if (!validEmotions.includes(emotion)) {
+    return res.status(400).json({
+      error: 'Invalid emotion',
+      validEmotions,
+    });
+  }
+
+  const cmd = buildFirmwareCommand('robot_expression', { emotion });
+  const sent = sendToRobotClients(cmd);
+  sendToWebClients(cmd);
+
+  recordLog('info', `[API] robot/expression: ${emotion} → ${sent} robot(s)`);
+  res.json({ ok: true, emotion, robotsReached: sent });
 });
 
 function buildFirmwareCommand(functionName: string, args: any) {

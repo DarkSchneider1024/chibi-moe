@@ -1,13 +1,37 @@
 import { useEffect, useRef } from 'react';
+import { Mic } from 'lucide-react';
 
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'robot';
   text: string;
+  type?: 'text' | 'audio';
 }
 
 interface ChatLogProps {
   messages: ChatMessage[];
+}
+
+function AudioBubble() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <Mic size={16} style={{ opacity: 0.9, flexShrink: 0 }} />
+      <span style={{ fontSize: '0.85rem' }}>語音訊息</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '4px' }}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <div
+            key={i}
+            style={{
+              width: '3px',
+              borderRadius: '2px',
+              background: 'rgba(255,255,255,0.7)',
+              animation: `audioWave 1.2s ease-in-out ${i * 0.1}s infinite`,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function ChatLog({ messages }: ChatLogProps) {
@@ -32,7 +56,7 @@ export function ChatLog({ messages }: ChatLogProps) {
     }}>
       {messages.length === 0 && (
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: 'auto', marginBottom: 'auto' }}>
-          Say something to start the conversation!
+          說點什麼來開始對話吧！
         </div>
       )}
       {messages.map((msg) => (
@@ -50,7 +74,7 @@ export function ChatLog({ messages }: ChatLogProps) {
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}
         >
-          {msg.text}
+          {msg.type === 'audio' ? <AudioBubble /> : msg.text}
         </div>
       ))}
       <div ref={endRef} />

@@ -1,11 +1,23 @@
-import { Camera, CameraOff } from 'lucide-react';
+import { Camera, CameraOff, Aperture } from 'lucide-react';
+import { useState } from 'react';
 
 interface CameraViewProps {
   imageUrl: string | null;
   isConnected: boolean;
+  onSnapshot: () => void;
 }
 
-export function CameraView({ imageUrl, isConnected }: CameraViewProps) {
+export function CameraView({ imageUrl, isConnected, onSnapshot }: CameraViewProps) {
+  const [flashActive, setFlashActive] = useState(false);
+
+  const handleSnapshot = () => {
+    if (!imageUrl) return;
+    // Trigger flash animation
+    setFlashActive(true);
+    setTimeout(() => setFlashActive(false), 300);
+    onSnapshot();
+  };
+
   return (
     <div style={{
       width: '100%',
@@ -43,6 +55,18 @@ export function CameraView({ imageUrl, isConnected }: CameraViewProps) {
           )}
         </div>
       )}
+
+      {/* Flash overlay */}
+      {flashActive && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(255,255,255,0.8)',
+          pointerEvents: 'none',
+          animation: 'flashFade 0.3s ease-out forwards',
+          zIndex: 10,
+        }} />
+      )}
       
       {/* Status indicator */}
       <div style={{
@@ -65,6 +89,45 @@ export function CameraView({ imageUrl, isConnected }: CameraViewProps) {
           </>
         )}
       </div>
+
+      {/* Snapshot button */}
+      {imageUrl && (
+        <button
+          onClick={handleSnapshot}
+          style={{
+            position: 'absolute',
+            bottom: '12px',
+            right: '12px',
+            background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '8px 16px',
+            cursor: 'pointer',
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: '0.8rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.25s ease',
+            boxShadow: '0 4px 16px rgba(59,130,246,0.4)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 5,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.5)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.4)';
+          }}
+          title="擷取快照 (Take Snapshot)"
+        >
+          <Aperture size={16} />
+          拍照
+        </button>
+      )}
     </div>
   );
 }
