@@ -1,5 +1,5 @@
 // Removed unused React
-import { Mic, Square, Settings, Wifi, WifiOff, Cpu, BookOpen, Camera, CameraOff } from 'lucide-react';
+import { Mic, Square, Settings, WifiOff, Cpu, BookOpen, Camera, CameraOff } from 'lucide-react';
 
 interface ControlPanelProps {
   isRecording: boolean;
@@ -28,18 +28,20 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
       gap: '8px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifySelf: 'start' }}>
-        {isConnected ? <Wifi color="var(--success)" size={20} /> : <WifiOff color="var(--danger)" size={20} />}
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          {isConnected ? '已連線 (Connected)' : '未連線 (Disconnected)'}
-        </span>
         {!isConnected && (
-          <button 
-            className="btn-primary" 
-            onClick={onConnect}
-            style={{ padding: '4px 8px', fontSize: '0.75rem', marginLeft: '8px' }}
-          >
-            重新連線
-          </button>
+          <>
+            <WifiOff color="var(--danger)" size={20} />
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              未連線 (Disconnected)
+            </span>
+            <button 
+              className="btn-primary" 
+              onClick={onConnect}
+              style={{ padding: '4px 8px', fontSize: '0.75rem', marginLeft: '8px' }}
+            >
+              重新連線
+            </button>
+          </>
         )}
       </div>
 

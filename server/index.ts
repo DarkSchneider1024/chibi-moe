@@ -384,6 +384,9 @@ wss.on('connection', (ws) => {
       if (msg.type !== 'audio') return;
 
       const base64Audio = String(msg.data || '');
+      const audioFormat = String(msg.format || 'webm');
+      const mimeType = audioFormat === 'wav' ? 'audio/wav' : 'audio/webm';
+
       sendJson(ws, { type: 'status', state: 'processing' });
 
       if (!state.geminiApiKey) {
@@ -404,7 +407,7 @@ wss.on('connection', (ws) => {
           role: 'user',
           parts: [
             { text: prompt },
-            { inlineData: { mimeType: 'audio/webm', data: base64Audio } },
+            { inlineData: { mimeType: mimeType, data: base64Audio } },
           ],
         });
 

@@ -162,3 +162,60 @@ div:hover > .snap-actions {
   0%, 100% { height: 6px; }
   50% { height: 16px; }
 }
+
+/* Markdown formatting inside ManualModal */
+.markdown-body {
+  word-break: break-word;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  margin: 16px 0;
+  display: block;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  overflow-x: auto;
+  display: block;
+}
+
+.markdown-body th, .markdown-body td {
+  border: 1px solid var(--glass-border);
+  padding: 8px 12px;
+  text-align: left;
+  min-width: 80px;
+}
+
+.markdown-body th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.markdown-body pre {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+  border: 1px solid var(--glass-border);
+}
+
+.markdown-body code {
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #f43f5e;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--text-primary);
+}

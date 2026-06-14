@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { X, BookOpen } from 'lucide-react';
 import firmwareDoc from '../../../docs/firmware.md?raw';
 import architectureDoc from '../../../docs/architecture.md?raw';
+import hardwareDoc from '../../../docs/hardware-setup.md?raw';
 
 interface ManualModalProps {
   isOpen: boolean;
@@ -10,7 +11,7 @@ interface ManualModalProps {
 }
 
 export function ManualModal({ isOpen, onClose }: ManualModalProps) {
-  const [activeTab, setActiveTab] = useState<'firmware' | 'architecture'>('firmware');
+  const [activeTab, setActiveTab] = useState<'firmware' | 'hardware' | 'architecture'>('firmware');
 
   if (!isOpen) return null;
 
@@ -23,26 +24,73 @@ export function ManualModal({ isOpen, onClose }: ManualModalProps) {
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 2000,
-      backdropFilter: 'blur(8px)'
+      backdropFilter: 'blur(8px)',
+      padding: '16px'
     }}>
-      <div className="glass-panel" style={{ width: '800px', height: '80vh', padding: '24px', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+      <div className="glass-panel" style={{ 
+        width: '100%', 
+        maxWidth: '800px', 
+        height: '85vh', 
+        padding: '20px', 
+        position: 'relative', 
+        display: 'flex', 
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+        overflow: 'hidden'
+      }}>
         <button onClick={onClose} className="btn-icon" style={{ position: 'absolute', top: '16px', right: '16px', width: '32px', height: '32px' }}>
           <X size={16} />
         </button>
         
-        <h2 style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}><BookOpen style={{ marginRight: '8px' }} /> 系統說明書</h2>
+        <h2 style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', fontSize: '1.4rem' }}>
+          <BookOpen style={{ marginRight: '8px' }} /> 系統說明書
+        </h2>
         
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: '8px', 
+          marginBottom: '16px' 
+        }}>
           <button 
             className="btn-primary" 
-            style={{ opacity: activeTab === 'firmware' ? 1 : 0.5, flex: 1 }}
+            style={{ 
+              opacity: activeTab === 'firmware' ? 1 : 0.5, 
+              flex: '1 1 0px',
+              minWidth: '100px',
+              padding: '8px 12px',
+              fontSize: '0.9rem',
+              whiteSpace: 'nowrap'
+            }}
             onClick={() => setActiveTab('firmware')}
           >
             韌體燒錄 SOP
           </button>
           <button 
             className="btn-primary" 
-            style={{ opacity: activeTab === 'architecture' ? 1 : 0.5, flex: 1 }}
+            style={{ 
+              opacity: activeTab === 'hardware' ? 1 : 0.5, 
+              flex: '1 1 0px',
+              minWidth: '100px',
+              padding: '8px 12px',
+              fontSize: '0.9rem',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={() => setActiveTab('hardware')}
+          >
+            硬體組裝指引
+          </button>
+          <button 
+            className="btn-primary" 
+            style={{ 
+              opacity: activeTab === 'architecture' ? 1 : 0.5, 
+              flex: '1 1 0px',
+              minWidth: '100px',
+              padding: '8px 12px',
+              fontSize: '0.9rem',
+              whiteSpace: 'nowrap'
+            }}
             onClick={() => setActiveTab('architecture')}
           >
             系統架構
@@ -53,13 +101,13 @@ export function ManualModal({ isOpen, onClose }: ManualModalProps) {
           flex: 1, 
           overflowY: 'auto', 
           background: 'rgba(0,0,0,0.2)', 
-          padding: '24px', 
+          padding: '16px', 
           borderRadius: '12px',
           color: 'var(--text-primary)',
           lineHeight: '1.6'
         }} className="markdown-body">
           <ReactMarkdown>
-            {activeTab === 'firmware' ? firmwareDoc : architectureDoc}
+            {activeTab === 'firmware' ? firmwareDoc : activeTab === 'hardware' ? hardwareDoc : architectureDoc}
           </ReactMarkdown>
         </div>
 

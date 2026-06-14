@@ -14,6 +14,15 @@ export function RobotAvatar({ status }: RobotAvatarProps) {
     }
   };
 
+  const getStatusText = () => {
+    switch (status) {
+      case 'listening': return '聆聽中 (Listening)';
+      case 'speaking': return '說話中 (Speaking)';
+      case 'processing': return '處理中 (Processing)';
+      default: return '待命閒置 (Idle)';
+    }
+  };
+
   return (
     <div className="avatar-container" style={{
       display: 'flex',
@@ -45,8 +54,8 @@ export function RobotAvatar({ status }: RobotAvatarProps) {
           filter: 'blur(2px)'
         }}></div>
       </div>
-      <p style={{ marginTop: '1.5rem', fontWeight: 500, color: getStatusColor(), textTransform: 'capitalize' }}>
-        {status}
+      <p style={{ marginTop: '1.5rem', fontWeight: 500, color: getStatusColor() }}>
+        {getStatusText()}
       </p>
     </div>
   );
