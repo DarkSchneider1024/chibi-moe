@@ -397,11 +397,10 @@ wss.on('connection', (ws) => {
 
       try {
         const ai = new GoogleGenAI({ apiKey: state.geminiApiKey });
-        let prompt = 'You are chibi-moe, a cute voice assistant. Reply in natural, concise Traditional Chinese.';
-
-        if (state.enableMachineOps) {
-          prompt += ' If the user asks for movement, dancing, spinning, or expression changes, use the available robot tool. Do not call tools unless the user clearly asks for hardware operation.';
-        }
+        let prompt = 'You are chibi-moe, a cute voice assistant. Reply in natural, concise Traditional Chinese. ' +
+                     'When the user asks for movement, dancing, spinning, or expression changes, you MUST call the corresponding robot tool. ' +
+                     'For example: when user says "往前走", "前進", "倒車", "後退", "向左轉", "向右轉", "旋轉", "轉圈圈", or "跳舞", call the `robot_move` tool with appropriate action and duration. ' +
+                     'Do not call tools unless the user clearly asks for hardware/movement operations.';
 
         state.history.push({
           role: 'user',
