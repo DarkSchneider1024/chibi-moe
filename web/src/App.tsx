@@ -368,6 +368,7 @@ export default function App() {
         isOpen={isControllerOpen}
         onClose={() => setIsControllerOpen(false)}
         isConnected={isConnected}
+        robotConnected={backendStatus?.robot.connected || false}
         imageUrl={cameraImageUrl}
         messages={messages}
         robotStatus={robotStatus}

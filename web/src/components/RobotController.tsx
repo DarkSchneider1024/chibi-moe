@@ -9,6 +9,7 @@ interface RobotControllerProps {
   isOpen: boolean;
   onClose: () => void;
   isConnected: boolean;
+  robotConnected: boolean;
   imageUrl: string | null;
   messages: ChatMessage[];
   robotStatus: 'idle' | 'listening' | 'speaking' | 'processing';
@@ -36,6 +37,7 @@ export function RobotController({
   isOpen,
   onClose,
   isConnected,
+  robotConnected,
   imageUrl,
   messages,
   robotStatus,
@@ -82,25 +84,25 @@ export function RobotController({
     {
       name: 'ESP32-S3-CAM',
       icon: <Camera size={18} />,
-      status: imageUrl ? 'online' : (isConnected ? 'standby' : 'offline'),
+      status: imageUrl ? 'online' : (robotConnected ? 'standby' : 'offline'),
       detail: '影像串流模組',
     },
     {
       name: 'INMP441 麥克風',
       icon: <Mic size={18} />,
-      status: isConnected ? 'online' : 'offline',
+      status: robotConnected ? 'online' : 'offline',
       detail: 'I2S 全向麥克風',
     },
     {
       name: '馬達車底盤',
       icon: <Cog size={18} />,
-      status: isConnected ? 'online' : 'offline',
+      status: robotConnected ? 'online' : 'offline',
       detail: '2WD 智能小車',
     },
     {
       name: 'MAX98357 音響',
       icon: <Volume2 size={18} />,
-      status: isConnected ? 'online' : 'offline',
+      status: robotConnected ? 'online' : 'offline',
       detail: 'I2S 音訊放大器 + 喇叭',
     },
   ];
@@ -322,7 +324,7 @@ export function RobotController({
               size={160}
               onMove={handleJoystickMove}
               onRelease={handleJoystickRelease}
-              disabled={!isConnected}
+              disabled={!robotConnected}
             />
             <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
               拖曳搖桿控制移動
