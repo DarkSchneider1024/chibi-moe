@@ -56,6 +56,48 @@ bool is_recording = false;
 bool last_button_state = HIGH;
 unsigned long record_start_time = 0;
 
+// Motor Driver Pins (L9110S / MX1508 / L298N)
+#define MOTOR_L_PIN1      19
+#define MOTOR_L_PIN2      20
+#define MOTOR_R_PIN1      21
+#define MOTOR_R_PIN2      47
+
+unsigned long motor_stop_time = 0;
+
+void controlMotors(String direction) {
+  if (direction == "forward") {
+    digitalWrite(MOTOR_L_PIN1, HIGH);
+    digitalWrite(MOTOR_L_PIN2, LOW);
+    digitalWrite(MOTOR_R_PIN1, HIGH);
+    digitalWrite(MOTOR_R_PIN2, LOW);
+  } else if (direction == "backward") {
+    digitalWrite(MOTOR_L_PIN1, LOW);
+    digitalWrite(MOTOR_L_PIN2, HIGH);
+    digitalWrite(MOTOR_R_PIN1, LOW);
+    digitalWrite(MOTOR_R_PIN2, HIGH);
+  } else if (direction == "left") {
+    digitalWrite(MOTOR_L_PIN1, LOW);
+    digitalWrite(MOTOR_L_PIN2, HIGH);
+    digitalWrite(MOTOR_R_PIN1, HIGH);
+    digitalWrite(MOTOR_R_PIN2, LOW);
+  } else if (direction == "right") {
+    digitalWrite(MOTOR_L_PIN1, HIGH);
+    digitalWrite(MOTOR_L_PIN2, LOW);
+    digitalWrite(MOTOR_R_PIN1, LOW);
+    digitalWrite(MOTOR_R_PIN2, HIGH);
+  } else if (direction == "spin") {
+    digitalWrite(MOTOR_L_PIN1, HIGH);
+    digitalWrite(MOTOR_L_PIN2, LOW);
+    digitalWrite(MOTOR_R_PIN1, LOW);
+    digitalWrite(MOTOR_R_PIN2, HIGH);
+  } else {
+    digitalWrite(MOTOR_L_PIN1, LOW);
+    digitalWrite(MOTOR_L_PIN2, LOW);
+    digitalWrite(MOTOR_R_PIN1, LOW);
+    digitalWrite(MOTOR_R_PIN2, LOW);
+  }
+}
+
 // MP3 Playback Variables
 AudioFileSourcePROGMEM *fileSource = nullptr;
 AudioGeneratorMP3 *mp3 = nullptr;
@@ -409,12 +451,27 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
           Serial.println("Command: " + cmd);
           Serial.println("Direction: " + dir);
           if (cmd == "move") {
-             if (dir == "forward") Serial.println("=> Moving Forward");
-             else if (dir == "backward") Serial.println("=> Moving Backward");
-             else if (dir == "left") Serial.println("=> Turning Left");
-             else if (dir == "right") Serial.println("=> Turning Right");
-             else if (dir == "dance") Serial.println("=> Dancing");
-             else if (dir == "spin_around") Serial.println("=> Spinning Around");
+             if (dir == "forward") {
+                Serial.println("=> Moving Forward");
+                controlMotors("forward");
+             } else if (dir == "backward") {
+                Serial.println("=> Moving Backward");
+                controlMotors("backward");
+             } else if (dir == "left") {
+                Serial.println("=> Turning Left");
+                controlMotors("left");
+             } else if (dir == "right") {
+                Serial.println("=> Turning Right");
+                controlMotors("right");
+             } else if (dir == "dance" || dir == "spin_around") {
+                Serial.println("=> Spinning/Dancing");
+                controlMotors("spin");
+             }
+             if (duration > 0) {
+                motor_stop_time = millis() + duration;
+             } else {
+                motor_stop_time = 0;
+             }
           } else if (cmd == "expression") {
              Serial.println("=> Expression: " + emotion);
           }
@@ -460,6 +517,12 @@ void setup() {
   } else {
     Serial.println("PSRAM not found! Audio recording might be memory-constrained.");
   }
+
+  pinMode(MOTOR_L_PIN1, OUTPUT);
+  pinMode(MOTOR_L_PIN2, OUTPUT);
+  pinMode(MOTOR_R_PIN1, OUTPUT);
+  pinMode(MOTOR_R_PIN2, OUTPUT);
+  controlMotors("stop");
 
   pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
   if (digitalRead(BOOT_BUTTON_PIN) == LOW) {
@@ -541,6 +604,12 @@ void setup() {
 
 void loop() {
   webSocket.loop();
+
+  // Motor stop timer check
+  if (motor_stop_time > 0 && millis() >= motor_stop_time) {
+    controlMotors("stop");
+    motor_stop_time = 0;
+  }
 
   // MP3 Audio loop
   if (mp3 && mp3->isRunning()) {
