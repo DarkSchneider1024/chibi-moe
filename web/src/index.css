@@ -1,20 +1,20 @@
 :root {
-  /* Color Palette - Kawaii Cute Dark Mode */
-  --bg-primary: #0F172A;
-  --bg-secondary: #1E293B;
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
+  /* Color Palette - Shimajiro Bright Kawaii Theme */
+  --bg-primary: #FFFDF9;         /* Off-white warm cream */
+  --bg-secondary: #FFF3DB;       /* Warm soft yellow/orange */
+  --text-primary: #4A3E3D;       /* Soft warm dark brown */
+  --text-secondary: #8C7A78;     /* Soft warm medium brown */
   
-  --accent-blue: #60A5FA;       /* Soft pastel blue */
-  --accent-purple: #F472B6;     /* Cute pastel pink/purple */
-  --accent-glow: rgba(244, 114, 182, 0.45);
+  --accent-blue: #FFAA00;       /* Shimajiro signature yellow/orange */
+  --accent-purple: #FF5E00;     /* Shimajiro vibrant orange accent */
+  --accent-glow: rgba(255, 170, 0, 0.3);
   
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 170, 0, 0.2);
+  --glass-shadow: 0 8px 30px rgba(255, 170, 0, 0.08);
 
-  --danger: #F43F5E;            /* Soft rose/red */
-  --success: #34D399;           /* Soft pastel emerald */
+  --danger: #FF4D4D;            /* Friendly bright red */
+  --success: #2ECC71;           /* Bright green */
 }
 
 * {
@@ -32,8 +32,8 @@ body {
   flex-direction: column;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(circle at 15% 50%, rgba(96, 165, 250, 0.12), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.12), transparent 25%);
+    radial-gradient(circle at 15% 50%, rgba(255, 170, 0, 0.1), transparent 30%),
+    radial-gradient(circle at 85% 30%, rgba(255, 94, 0, 0.1), transparent 30%);
 }
 
 #root {
@@ -105,12 +105,12 @@ h1, h2, h3 {
 }
 
 .btn-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 170, 0, 0.15);
 }
 
 /* Inputs */
 .input-glass {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 170, 0, 0.05);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
   padding: 12px 16px;
@@ -123,7 +123,7 @@ h1, h2, h3 {
 .input-glass:focus {
   outline: none;
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 2px rgba(255, 170, 0, 0.3);
 }
 
 /* Scrollbar */
@@ -198,7 +198,7 @@ div:hover > .snap-actions {
 }
 
 .markdown-body pre {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(255, 170, 0, 0.05);
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
@@ -208,10 +208,10 @@ div:hover > .snap-actions {
 
 .markdown-body code {
   font-family: monospace;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(255, 170, 0, 0.08);
   padding: 2px 6px;
   border-radius: 4px;
-  color: #f43f5e;
+  color: var(--accent-purple);
 }
 
 .markdown-body pre code {
