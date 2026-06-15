@@ -53,6 +53,9 @@ export default function App() {
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const latestBlobRef = useRef<Blob | null>(null);
+  const [voiceMode, setVoiceMode] = useState<'phone' | 'robot'>(() => {
+    return (localStorage.getItem('voiceMode') as 'phone' | 'robot') || 'phone';
+  });
 
   const handleBinaryMessage = useCallback((blob: Blob) => {
     latestBlobRef.current = blob;
@@ -207,6 +210,14 @@ export default function App() {
     startRecording();
   };
 
+  const handleToggleVoiceMode = useCallback(() => {
+    setVoiceMode(prev => {
+      const next = prev === 'phone' ? 'robot' : 'phone';
+      localStorage.setItem('voiceMode', next);
+      return next;
+    });
+  }, []);
+
   const handleStopRecording = async () => {
     const base64Audio = await stopRecording();
     if (base64Audio) {
@@ -221,8 +232,24 @@ export default function App() {
         }]);
         return;
       }
+
+      if (voiceMode === 'robot' && !backendStatus?.robot.connected) {
+        setRobotStatus('idle');
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          sender: 'system',
+          text: '⚠️ 傳送失敗：機器人小車離線中，無法使用機器人模式。',
+          type: 'error'
+        }]);
+        return;
+      }
+
       setRobotStatus('processing');
-      const sent = sendMessage({ type: 'audio', data: base64Audio });
+      const sent = sendMessage({
+        type: 'audio',
+        data: base64Audio,
+        output_to_robot: voiceMode === 'robot'
+      });
       if (!sent) {
         setRobotStatus('idle');
         setMessages(prev => [...prev, {
@@ -465,6 +492,8 @@ export default function App() {
         onConnect={connect}
         cameraEnabled={cameraEnabled}
         onToggleCamera={handleToggleCamera}
+        voiceMode={voiceMode}
+        onToggleVoiceMode={handleToggleVoiceMode}
       />
 
       <SettingsModal
@@ -511,6 +540,8 @@ export default function App() {
         onSnapshot={handleSnapshot}
         onDeleteSnapshot={handleDeleteSnapshot}
         onClearSnapshots={handleClearSnapshots}
+        voiceMode={voiceMode}
+        onToggleVoiceMode={handleToggleVoiceMode}
       />
     </div>
   );

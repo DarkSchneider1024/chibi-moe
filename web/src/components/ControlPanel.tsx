@@ -12,13 +12,28 @@ interface ControlPanelProps {
   onConnect: () => void;
   cameraEnabled: boolean;
   onToggleCamera: () => void;
+  voiceMode: 'phone' | 'robot';
+  onToggleVoiceMode: () => void;
 }
 
-export function ControlPanel({ isRecording, isConnected, onStartRecording, onStopRecording, onOpenSettings, onOpenFirmwareFlasher, onOpenManual, onConnect, cameraEnabled, onToggleCamera }: ControlPanelProps) {
+export function ControlPanel({
+  isRecording,
+  isConnected,
+  onStartRecording,
+  onStopRecording,
+  onOpenSettings,
+  onOpenFirmwareFlasher,
+  onOpenManual,
+  onConnect,
+  cameraEnabled,
+  onToggleCamera,
+  voiceMode,
+  onToggleVoiceMode,
+}: ControlPanelProps) {
   return (
     <div className="glass-panel" style={{ 
       display: 'grid', 
-      gridTemplateColumns: '1fr auto 1fr',
+      gridTemplateColumns: '1.2fr auto 1.2fr',
       alignItems: 'center', 
       padding: '16px 24px',
       marginTop: 'auto',
@@ -28,7 +43,7 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
       gap: '8px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifySelf: 'start' }}>
-        {!isConnected && (
+        {!isConnected ? (
           <>
             <WifiOff color="var(--danger)" size={20} />
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -42,6 +57,24 @@ export function ControlPanel({ isRecording, isConnected, onStartRecording, onSto
               重新連線
             </button>
           </>
+        ) : (
+          <button 
+            className="btn-secondary" 
+            onClick={onToggleVoiceMode}
+            title="切換語音收發模式"
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {voiceMode === 'phone' ? '📱 手機模式' : '🤖 機器人模式'}
+          </button>
         )}
       </div>
 

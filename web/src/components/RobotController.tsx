@@ -24,6 +24,8 @@ interface RobotControllerProps {
   onSnapshot: () => void;
   onDeleteSnapshot: (id: string) => void;
   onClearSnapshots: () => void;
+  voiceMode: 'phone' | 'robot';
+  onToggleVoiceMode: () => void;
 }
 
 interface ComponentInfo {
@@ -51,6 +53,8 @@ export function RobotController({
   onDeleteSnapshot,
   onClearSnapshots,
   backendUrl,
+  voiceMode,
+  onToggleVoiceMode,
 }: RobotControllerProps) {
   const [showComponents, setShowComponents] = useState(false);
   const [flashActive, setFlashActive] = useState(false);
@@ -336,28 +340,47 @@ export function RobotController({
             )}
 
             {/* Voice button */}
-            <button
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                border: `2px solid ${isRecording ? 'var(--danger)' : 'var(--accent-blue)'}`,
-                background: isRecording ? 'var(--danger)' : 'var(--glass-bg)',
-                color: isRecording ? '#fff' : 'var(--accent-blue)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease',
-                boxShadow: isRecording ? '0 0 20px rgba(239,68,68,0.4)' : '0 4px 12px rgba(0,0,0,0.2)',
-                animation: isRecording ? 'pulse-glow 1.5s infinite' : 'none',
-                transform: isRecording ? 'scale(1.1)' : 'scale(1)',
-              }}
-              onClick={isRecording ? onStopRecording : onStartRecording}
-              title={isRecording ? '停止錄音' : '語音對話'}
-            >
-              {isRecording ? <Square size={24} fill="currentColor" /> : <Mic size={28} />}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <button
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  border: `2px solid ${isRecording ? 'var(--danger)' : 'var(--accent-blue)'}`,
+                  background: isRecording ? 'var(--danger)' : 'var(--glass-bg)',
+                  color: isRecording ? '#fff' : 'var(--accent-blue)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease',
+                  boxShadow: isRecording ? '0 0 20px rgba(239,68,68,0.4)' : '0 4px 12px rgba(0,0,0,0.2)',
+                  animation: isRecording ? 'pulse-glow 1.5s infinite' : 'none',
+                  transform: isRecording ? 'scale(1.1)' : 'scale(1)',
+                }}
+                onClick={isRecording ? onStopRecording : onStartRecording}
+                title={isRecording ? '停止錄音' : '語音對話'}
+              >
+                {isRecording ? <Square size={24} fill="currentColor" /> : <Mic size={28} />}
+              </button>
+              
+              <button 
+                className="btn-secondary"
+                onClick={onToggleVoiceMode}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '0.65rem',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {voiceMode === 'phone' ? '📱 手機收發' : '🤖 機器人收發'}
+              </button>
+            </div>
             <span style={{
               fontSize: '0.7rem',
               color: isRecording ? 'var(--danger)' : 'var(--text-secondary)',

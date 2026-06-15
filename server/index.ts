@@ -467,7 +467,14 @@ wss.on('connection', (ws) => {
 
         const ttsBase64 = await generateTTS(replyText);
         if (ttsBase64) {
-          sendJson(ws, { type: 'audio_out', data: ttsBase64 });
+          const audioMsg = { type: 'audio_out', data: ttsBase64 };
+          if (msg.output_to_robot) {
+            recordLog('info', 'Sending TTS audio to robot speaker.');
+            sendToRobotClients(audioMsg);
+            sendJson(ws, { type: 'status', state: 'idle' });
+          } else {
+            sendJson(ws, audioMsg);
+          }
         } else {
           recordLog('warn', `TTS generation failed or returned empty.`);
           sendJson(ws, { type: 'error', data: '語音合成 (TTS) 失敗，但文字已生成。' });

@@ -4,6 +4,7 @@ import { X, BookOpen } from 'lucide-react';
 import firmwareDoc from '../../../docs/firmware.md?raw';
 import architectureDoc from '../../../docs/architecture.md?raw';
 import hardwareDoc from '../../../docs/hardware-setup.md?raw';
+import uiUxGuideDoc from '../../../docs/ui-ux-guide.md?raw';
 
 interface ManualModalProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface ManualModalProps {
 }
 
 export function ManualModal({ isOpen, onClose }: ManualModalProps) {
-  const [activeTab, setActiveTab] = useState<'firmware' | 'hardware' | 'architecture'>('firmware');
+  const [activeTab, setActiveTab] = useState<'ui-ux' | 'firmware' | 'hardware' | 'architecture'>('ui-ux');
 
   if (!isOpen) return null;
 
@@ -53,6 +54,20 @@ export function ManualModal({ isOpen, onClose }: ManualModalProps) {
           gap: '8px', 
           marginBottom: '16px' 
         }}>
+          <button 
+            className="btn-primary" 
+            style={{ 
+              opacity: activeTab === 'ui-ux' ? 1 : 0.5, 
+              flex: '1 1 0px',
+              minWidth: '100px',
+              padding: '8px 12px',
+              fontSize: '0.9rem',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={() => setActiveTab('ui-ux')}
+          >
+            UI/UX 操作指引
+          </button>
           <button 
             className="btn-primary" 
             style={{ 
@@ -107,7 +122,7 @@ export function ManualModal({ isOpen, onClose }: ManualModalProps) {
           lineHeight: '1.6'
         }} className="markdown-body">
           <ReactMarkdown>
-            {activeTab === 'firmware' ? firmwareDoc : activeTab === 'hardware' ? hardwareDoc : architectureDoc}
+            {activeTab === 'ui-ux' ? uiUxGuideDoc : activeTab === 'firmware' ? firmwareDoc : activeTab === 'hardware' ? hardwareDoc : architectureDoc}
           </ReactMarkdown>
         </div>
 
