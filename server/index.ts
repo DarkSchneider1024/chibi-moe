@@ -382,6 +382,20 @@ wss.on('connection', (ws) => {
         return;
       }
 
+      if (msg.type === 'update_config') {
+        recordLog('info', `[UI] Update config command: Host=${msg.websocket_host}, Port=${msg.websocket_port}`);
+        const cmd = {
+          type: 'command',
+          cmd: 'update_config',
+          args: {
+            websocket_host: msg.websocket_host,
+            websocket_port: Number(msg.websocket_port)
+          }
+        };
+        sendToRobotClients(cmd);
+        return;
+      }
+
       if (msg.type !== 'audio') return;
 
       const base64Audio = String(msg.data || '');
@@ -455,15 +469,20 @@ wss.on('connection', (ws) => {
         if (ttsBase64) {
           sendJson(ws, { type: 'audio_out', data: ttsBase64 });
         } else {
+          recordLog('warn', `TTS generation failed or returned empty.`);
+          sendJson(ws, { type: 'error', data: '語音合成 (TTS) 失敗，但文字已生成。' });
           sendJson(ws, { type: 'status', state: 'idle' });
         }
       } catch (e: any) {
         recordLog('error', `Gemini Error: ${e.message}`);
-        sendJson(ws, { type: 'text', data: 'Gemini API error: ' + e.message });
+        sendJson(ws, { type: 'error', data: 'Gemini API 發生錯誤: ' + e.message });
         sendJson(ws, { type: 'status', state: 'idle' });
       }
     } catch (e) {
-      recordLog('error', `Error handling WS message: ${e instanceof Error ? e.message : String(e)}`);
+      const errMsg = e instanceof Error ? e.message : String(e);
+      recordLog('error', `Error handling WS message: ${errMsg}`);
+      sendJson(ws, { type: 'error', data: '伺服器處理訊息時發生錯誤: ' + errMsg });
+      sendJson(ws, { type: 'status', state: 'idle' });
     }
   });
 

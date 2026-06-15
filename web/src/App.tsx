@@ -150,6 +150,9 @@ export default function App() {
       playBase64Audio(lastMessage.data);
     } else if (lastMessage.type === 'status') {
       setRobotStatus(lastMessage.state);
+    } else if (lastMessage.type === 'error') {
+      setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'system', text: lastMessage.data || '未知錯誤', type: 'error' }]);
+      setRobotStatus('idle');
     }
   }, [lastMessage, playBase64Audio]);
 
@@ -167,6 +170,27 @@ export default function App() {
       setRobotStatus('processing');
     }
   }, [isRecording, robotStatus, stopPlaying]);
+
+  // Timeout protection for voice processing status
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    if (robotStatus === 'processing') {
+      timeoutId = window.setTimeout(() => {
+        setRobotStatus('idle');
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          sender: 'system',
+          text: '⚠️ 語音對話超時，伺服器未能在時間內回應。請稍後重試。',
+          type: 'error'
+        }]);
+      }, 25000); // 25 seconds timeout
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [robotStatus]);
 
   const handleStartRecording = () => {
     startRecording();
@@ -193,6 +217,58 @@ export default function App() {
     setCameraEnabled(newState);
     sendMessage({ type: 'camera_control', enabled: newState });
   }, [cameraEnabled, sendMessage]);
+
+  const handleToggleBackend = useCallback(() => {
+    const isLocal = /localhost|127\.0\.0\.1|3001/.test(backendUrl);
+    let newUrl = '';
+    if (isLocal) {
+      newUrl = DEFAULT_BACKEND_URL;
+      setBackendUrl(newUrl);
+      localStorage.setItem('backendUrl', newUrl);
+    } else {
+      const lastIp = localStorage.getItem('localComputerIp') || '';
+      const localIp = prompt(
+        '請輸入您電腦的區域網路 IP (例如 192.168.1.100，若是本機測試網頁可直接輸入 localhost 或 127.0.0.1)：',
+        lastIp || '192.168.1.'
+      );
+      if (localIp === null) return; // User cancelled
+      
+      const trimmedIp = localIp.trim();
+      if (trimmedIp) {
+        localStorage.setItem('localComputerIp', trimmedIp);
+        newUrl = `ws://${trimmedIp}:3001`;
+        setBackendUrl(newUrl);
+        localStorage.setItem('backendUrl', newUrl);
+      }
+    }
+  }, [backendUrl]);
+
+  const handleSyncToRobot = useCallback((targetUrl: string) => {
+    let host = targetUrl.trim();
+    let port = 80;
+    
+    if (host.startsWith('wss://')) {
+      host = host.substring(6);
+      port = 443;
+    } else if (host.startsWith('ws://')) {
+      host = host.substring(5);
+      port = 80;
+    }
+    
+    const colonIndex = host.lastIndexOf(':');
+    if (colonIndex > 0) {
+      port = parseInt(host.substring(colonIndex + 1), 10);
+      host = host.substring(0, colonIndex);
+    }
+    
+    sendMessage({
+      type: 'update_config',
+      websocket_host: host,
+      websocket_port: port,
+    });
+    
+    alert(`已向伺服器發送同步指令！\n機器人即將被切換至後端：${host}:${port}\n機器人接收指令後會重啟。`);
+  }, [sendMessage]);
 
 
   return (
@@ -222,6 +298,8 @@ export default function App() {
         lastFrameAt={backendStatus?.robot.lastFrameAt || ''}
         frameCount={backendStatus?.robot.frameCount || 0}
         onOpenLogs={() => setIsBackendLogOpen(true)}
+        backendUrl={backendUrl}
+        onToggleBackend={handleToggleBackend}
       />
 
       {/* ★ Robot Controller Entry Button - Most Prominent */}
@@ -350,6 +428,9 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleSaveSettings}
+        onSyncToRobot={handleSyncToRobot}
+        robotConnected={backendStatus?.robot.connected || false}
+        webConnected={isConnected}
       />
 
       <FirmwareFlasher

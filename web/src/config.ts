@@ -2,7 +2,12 @@ export const DEFAULT_BACKEND_URL =
   import.meta.env.VITE_BACKEND_WS_URL || 'wss://chibi.carrot-atelier.online';
 
 export function normalizeBackendUrl(value: string) {
-  return value.trim().replace(/^ws:\/\//, 'wss://');
+  const trimmed = value.trim();
+  const isLocal = /localhost|127\.0\.0\.1|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[::1\]/.test(trimmed);
+  if (isLocal) {
+    return trimmed;
+  }
+  return trimmed.replace(/^ws:\/\//, 'wss://');
 }
 
 /**

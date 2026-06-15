@@ -6,9 +6,12 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (settings: { apiKey: string; ollamaEndpoint: string; enableMachineOps: boolean; backendUrl: string }) => void;
+  onSyncToRobot?: (url: string) => void;
+  robotConnected?: boolean;
+  webConnected?: boolean;
 }
 
-export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, onSave, onSyncToRobot, robotConnected, webConnected }: SettingsModalProps) {
   const [apiKey, setApiKey] = useState('');
   const [ollamaEndpoint, setOllamaEndpoint] = useState('http://localhost:11434');
   const [backendUrl, setBackendUrl] = useState(DEFAULT_BACKEND_URL);
@@ -52,7 +55,7 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
       zIndex: 1000,
       backdropFilter: 'blur(4px)',
     }}>
-      <div className="glass-panel" style={{ width: '400px', padding: '24px', position: 'relative' }}>
+      <div className="glass-panel" style={{ width: '460px', padding: '24px', position: 'relative' }}>
         <button onClick={onClose} className="btn-icon" style={{ position: 'absolute', top: '16px', right: '16px', width: '32px', height: '32px' }}>
           <X size={16} />
         </button>
@@ -63,14 +66,34 @@ export function SettingsModal({ isOpen, onClose, onSave }: SettingsModalProps) {
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             後端 WebSocket 網址
           </label>
-          <input
-            type="text"
-            className="input-glass"
-            value={backendUrl}
-            onChange={(e) => setBackendUrl(e.target.value)}
-            placeholder="wss://chibi.carrot-atelier.online"
-          />
-          <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              type="text"
+              className="input-glass"
+              value={backendUrl}
+              onChange={(e) => setBackendUrl(e.target.value)}
+              placeholder="wss://chibi.carrot-atelier.online"
+              style={{ flex: 1 }}
+            />
+            {onSyncToRobot && (
+              <button
+                className="btn-secondary"
+                disabled={!webConnected || !robotConnected}
+                onClick={() => onSyncToRobot(backendUrl)}
+                title={(!webConnected || !robotConnected) ? "需要網頁與機器人皆連線至目前的伺服器" : "將此後端網址發送給機器人，使機器人切換並重啟"}
+                style={{
+                  fontSize: '0.8rem',
+                  padding: '0 12px',
+                  whiteSpace: 'nowrap',
+                  opacity: (!webConnected || !robotConnected) ? 0.5 : 1,
+                  cursor: (!webConnected || !robotConnected) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                同步到機器人
+              </button>
+            )}
+          </div>
+          <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', display: 'block', marginTop: '4px' }}>
             正式環境建議使用 wss://；本機測試才使用 ws://。
           </small>
         </div>

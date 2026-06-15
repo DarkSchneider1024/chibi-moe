@@ -3,9 +3,9 @@ import { Mic } from 'lucide-react';
 
 export interface ChatMessage {
   id: string;
-  sender: 'user' | 'robot';
+  sender: 'user' | 'robot' | 'system';
   text: string;
-  type?: 'text' | 'audio';
+  type?: 'text' | 'audio' | 'error';
 }
 
 interface ChatLogProps {
@@ -63,15 +63,21 @@ export function ChatLog({ messages }: ChatLogProps) {
         <div 
           key={msg.id} 
           style={{
-            alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-            background: msg.sender === 'user' ? 'var(--accent-blue)' : 'var(--glass-bg)',
-            color: 'white',
+            alignSelf: msg.sender === 'user' ? 'flex-end' : msg.sender === 'system' ? 'center' : 'flex-start',
+            background: msg.sender === 'user' 
+              ? 'var(--accent-blue)' 
+              : msg.sender === 'system' 
+                ? 'rgba(239, 68, 68, 0.2)' 
+                : 'var(--glass-bg)',
+            color: msg.sender === 'system' ? '#fca5a5' : 'white',
             padding: '12px 16px',
             borderRadius: '16px',
             borderBottomRightRadius: msg.sender === 'user' ? '4px' : '16px',
             borderBottomLeftRadius: msg.sender === 'robot' ? '4px' : '16px',
+            border: msg.sender === 'system' ? '1px solid rgba(239, 68, 68, 0.4)' : 'none',
             maxWidth: '80%',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            fontSize: msg.sender === 'system' ? '0.85rem' : '1rem',
           }}
         >
           {msg.type === 'audio' ? <AudioBubble /> : msg.text}

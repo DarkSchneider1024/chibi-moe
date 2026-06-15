@@ -8,6 +8,8 @@ interface BackendStatusPanelProps {
   lastFrameAt: string;
   frameCount: number;
   onOpenLogs: () => void;
+  backendUrl: string;
+  onToggleBackend: () => void;
 }
 
 function StatusLight({ active }: { active: boolean }) {
@@ -33,10 +35,14 @@ export function BackendStatusPanel({
   lastFrameAt,
   frameCount,
   onOpenLogs,
+  backendUrl,
+  onToggleBackend,
 }: BackendStatusPanelProps) {
   const lastFrameText = lastFrameAt
     ? new Date(lastFrameAt).toLocaleTimeString()
     : '尚未收到影像';
+
+  const isLocal = /localhost|127\.0\.0\.1|3001/.test(backendUrl);
 
   return (
     <div
@@ -76,6 +82,26 @@ export function BackendStatusPanel({
       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', flex: '1 1 180px' }}>
         影像 {frameCount} frames / {lastFrameText}
       </div>
+
+      <button
+        className="btn-secondary"
+        onClick={onToggleBackend}
+        title={isLocal ? "切換至雲端後端 (Switch to Cloud)" : "切換至本地後端 (Switch to Local)"}
+        style={{
+          padding: '6px 12px',
+          fontSize: '0.8rem',
+          borderRadius: '8px',
+          background: isLocal ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          color: 'var(--text-primary)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+        }}
+      >
+        {isLocal ? '💻 本機後端' : '☁️ 雲端後端'}
+      </button>
 
       <button
         className="btn-icon"

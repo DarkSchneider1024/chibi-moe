@@ -474,6 +474,19 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
              }
           } else if (cmd == "expression") {
              Serial.println("=> Expression: " + emotion);
+          } else if (cmd == "update_config") {
+             Serial.println("=> Update Config Command received!");
+             if (doc["args"].containsKey("websocket_host")) {
+                websocket_host = doc["args"]["websocket_host"].as<String>();
+             }
+             if (doc["args"].containsKey("websocket_port")) {
+                websocket_port = doc["args"]["websocket_port"].as<int>();
+             }
+             normalizeWebSocketConfig();
+             saveConfig();
+             Serial.println("Config updated via WebSocket Command. Restarting in 1s...");
+             delay(1000);
+             ESP.restart();
           }
           Serial.println("--------------------");
         } else if (msgType == "camera_control") {
