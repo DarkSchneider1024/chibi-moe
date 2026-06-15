@@ -23,16 +23,16 @@ export function CameraView({ imageUrl, isConnected, onSnapshot }: CameraViewProp
       width: '100%',
       maxWidth: '480px',
       aspectRatio: '4/3',
-      background: 'rgba(0,0,0,0.5)',
-      borderRadius: '16px',
+      background: '#111111',
+      borderRadius: '20px',
       overflow: 'hidden',
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      border: '1px solid rgba(255,255,255,0.1)',
+      border: '2px solid #111111',
       marginBottom: '16px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+      boxShadow: 'var(--glass-shadow)',
     }}>
       {imageUrl ? (
         <img 
@@ -41,16 +41,16 @@ export function CameraView({ imageUrl, isConnected, onSnapshot }: CameraViewProp
           style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-secondary)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#888888', textAlign: 'center', padding: '20px' }}>
           {!isConnected ? (
             <>
-              <CameraOff size={48} style={{ marginBottom: '8px', opacity: 0.5 }} />
-              <p>相機離線 (Camera Offline)</p>
+              <CameraOff size={48} style={{ marginBottom: '8px', opacity: 0.7, color: 'var(--danger)' }} />
+              <p style={{ fontWeight: 700, color: '#FFFFFF' }}>相機離線</p>
             </>
           ) : (
             <>
-              <Camera size={48} style={{ marginBottom: '8px', opacity: 0.5 }} />
-              <p>等待影像傳輸中... (Waiting for video stream...)</p>
+              <Camera size={48} style={{ marginBottom: '8px', opacity: 0.7, color: 'var(--accent-yellow)' }} />
+              <p style={{ fontWeight: 700, color: '#FFFFFF' }}>等待影像傳輸中...</p>
             </>
           )}
         </div>
@@ -61,7 +61,7 @@ export function CameraView({ imageUrl, isConnected, onSnapshot }: CameraViewProp
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(255,255,255,0.8)',
+          background: 'rgba(255,255,255,0.9)',
           pointerEvents: 'none',
           animation: 'flashFade 0.3s ease-out forwards',
           zIndex: 10,
@@ -73,19 +73,28 @@ export function CameraView({ imageUrl, isConnected, onSnapshot }: CameraViewProp
         position: 'absolute',
         top: '12px',
         right: '12px',
-        padding: '4px 8px',
-        borderRadius: '12px',
-        background: imageUrl ? 'rgba(0,0,0,0.6)' : 'transparent',
+        padding: '6px 10px',
+        borderRadius: '8px',
+        background: '#FFFFFF',
+        border: '2px solid #111111',
+        boxShadow: '2px 2px 0px #111111',
         display: 'flex',
         alignItems: 'center',
         gap: '6px',
         fontSize: '0.75rem',
-        backdropFilter: 'blur(4px)'
+        fontWeight: 700,
+        color: '#111111',
+        zIndex: 5,
       }}>
-        {imageUrl && (
+        {imageUrl ? (
           <>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)' }}></div>
-            <span style={{ color: '#fff' }}>即時影像 (LIVE)</span>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', border: '1px solid #111111' }}></div>
+            <span>即時影像</span>
+          </>
+        ) : (
+          <>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--danger)', border: '1px solid #111111' }}></div>
+            <span>未連線</span>
           </>
         )}
       </div>
@@ -98,31 +107,34 @@ export function CameraView({ imageUrl, isConnected, onSnapshot }: CameraViewProp
             position: 'absolute',
             bottom: '12px',
             right: '12px',
-            background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '8px 16px',
+            background: 'var(--accent-yellow)',
+            border: '2px solid #111111',
+            borderRadius: '10px',
+            padding: '8px 14px',
             cursor: 'pointer',
-            color: '#fff',
-            fontWeight: 600,
+            color: '#111111',
+            fontWeight: 800,
             fontSize: '0.8rem',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            transition: 'all 0.25s ease',
-            boxShadow: '0 4px 16px rgba(59,130,246,0.4)',
-            backdropFilter: 'blur(4px)',
+            transition: 'all 0.15s ease',
+            boxShadow: '2px 2px 0px #111111',
             zIndex: 5,
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.5)';
+            e.currentTarget.style.transform = 'translate(-1px, -1px)';
+            e.currentTarget.style.boxShadow = '3px 3px 0px #111111';
+            e.currentTarget.style.background = 'var(--accent-blue)';
+            e.currentTarget.style.color = '#FFFFFF';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(59,130,246,0.4)';
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.boxShadow = '2px 2px 0px #111111';
+            e.currentTarget.style.background = 'var(--accent-yellow)';
+            e.currentTarget.style.color = '#111111';
           }}
-          title="擷取快照 (Take Snapshot)"
+          title="擷取快照"
         >
           <Aperture size={16} />
           拍照
@@ -131,3 +143,4 @@ export function CameraView({ imageUrl, isConnected, onSnapshot }: CameraViewProp
     </div>
   );
 }
+

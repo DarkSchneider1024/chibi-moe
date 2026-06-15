@@ -1,5 +1,6 @@
 // Removed unused React
 import { Mic, Square, Settings, WifiOff, Cpu, BookOpen, Camera, CameraOff } from 'lucide-react';
+import { CustomEmoji } from './CustomEmoji';
 
 interface ControlPanelProps {
   isRecording: boolean;
@@ -40,19 +41,20 @@ export function ControlPanel({
       marginBottom: '24px',
       width: '100%',
       maxWidth: '600px',
-      gap: '8px'
+      gap: '8px',
+      background: '#FFFFFF',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifySelf: 'start' }}>
         {!isConnected ? (
           <>
             <WifiOff color="var(--danger)" size={20} />
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              未連線 (Disconnected)
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+              未連線
             </span>
             <button 
               className="btn-primary" 
               onClick={onConnect}
-              style={{ padding: '4px 8px', fontSize: '0.75rem', marginLeft: '8px' }}
+              style={{ padding: '6px 12px', fontSize: '0.75rem', marginLeft: '8px', boxShadow: '2px 2px 0px #111111' }}
             >
               重新連線
             </button>
@@ -66,14 +68,29 @@ export function ControlPanel({
               padding: '6px 12px',
               fontSize: '0.8rem',
               borderRadius: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: 'var(--text-primary)',
+              background: voiceMode === 'phone' ? '#FFFFFF' : 'var(--accent-blue)',
+              color: voiceMode === 'phone' ? '#111111' : '#FFFFFF',
+              border: '2px solid #111111',
+              boxShadow: '2px 2px 0px #111111',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: 700,
             }}
           >
-            {voiceMode === 'phone' ? '📱 手機模式' : '🤖 機器人模式'}
+            {voiceMode === 'phone' ? (
+              <>
+                <CustomEmoji name="phone" size={14} />
+                <span>手機模式</span>
+              </>
+            ) : (
+              <>
+                <CustomEmoji name="robot" size={14} />
+                <span>機器人模式</span>
+              </>
+            )}
           </button>
         )}
       </div>
@@ -82,10 +99,12 @@ export function ControlPanel({
         className="btn-icon" 
         style={{ 
           width: '64px', height: '64px',
-          background: isRecording ? 'var(--danger)' : 'var(--glass-bg)',
-          color: isRecording ? 'white' : 'var(--accent-blue)',
-          borderColor: isRecording ? 'var(--danger)' : 'var(--accent-blue)',
+          background: isRecording ? 'var(--danger)' : 'var(--accent-yellow)',
+          color: isRecording ? 'white' : '#111111',
+          borderColor: '#111111',
+          borderWidth: '2px',
           transform: isRecording ? 'scale(1.1)' : 'scale(1)',
+          boxShadow: isRecording ? '2px 2px 0px #111111' : '3px 3px 0px #111111',
           animation: isRecording ? 'pulse-glow 1.5s infinite' : 'none'
         }}
         onClick={isRecording ? onStopRecording : onStartRecording}
@@ -94,19 +113,20 @@ export function ControlPanel({
       </button>
 
       <div style={{ display: 'flex', gap: '12px', justifySelf: 'end' }}>
-        <button className="btn-icon" onClick={onToggleCamera} title={cameraEnabled ? "關閉影像 (Disable Camera)" : "開啟影像 (Enable Camera)"}>
+        <button className="btn-icon" onClick={onToggleCamera} title={cameraEnabled ? "關閉影像" : "開啟影像"}>
           {cameraEnabled ? <Camera size={20} /> : <CameraOff size={20} color="var(--danger)" />}
         </button>
-        <button className="btn-icon" onClick={onOpenManual} title="使用手冊 (Manual)">
+        <button className="btn-icon" onClick={onOpenManual} title="使用手冊">
           <BookOpen size={20} />
         </button>
-        <button className="btn-icon" onClick={onOpenFirmwareFlasher} title="韌體刷機 (Firmware Flasher)">
+        <button className="btn-icon" onClick={onOpenFirmwareFlasher} title="韌體刷機">
           <Cpu size={20} />
         </button>
-        <button className="btn-icon" onClick={onOpenSettings} title="設定 (Settings)">
+        <button className="btn-icon" onClick={onOpenSettings} title="設定">
           <Settings size={20} />
         </button>
       </div>
     </div>
   );
 }
+

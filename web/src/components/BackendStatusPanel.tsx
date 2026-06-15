@@ -1,4 +1,5 @@
 import { FileText } from 'lucide-react';
+import { CustomEmoji } from './CustomEmoji';
 
 interface BackendStatusPanelProps {
   webConnected: boolean;
@@ -16,11 +17,12 @@ function StatusLight({ active }: { active: boolean }) {
   return (
     <span
       style={{
-        width: '10px',
-        height: '10px',
+        width: '12px',
+        height: '12px',
         borderRadius: '50%',
         background: active ? 'var(--success)' : 'var(--danger)',
-        boxShadow: active ? '0 0 12px var(--success)' : 'none',
+        border: '2px solid #111111',
+        boxShadow: active ? '2px 2px 0px #111111' : 'none',
         flex: '0 0 auto',
       }}
     />
@@ -51,35 +53,36 @@ export function BackendStatusPanel({
         display: 'flex',
         alignItems: 'center',
         gap: '14px',
-        padding: '10px 14px',
+        padding: '12px 18px',
         margin: '56px 0 16px',
         width: '100%',
         maxWidth: '760px',
         flexWrap: 'wrap',
-        borderRadius: '14px',
+        borderRadius: '16px',
+        background: '#FFFFFF',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <StatusLight active={webConnected} />
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
           網頁 {webConnected ? '已連線' : '未連線'}
         </span>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
           {webCount} 個
         </span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <StatusLight active={robotConnected} />
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
           機器人 {robotConnected ? '已連線' : '未連線'}
         </span>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
           {robotCount} 個
         </span>
       </div>
 
-      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', flex: '1 1 180px' }}>
+      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', flex: '1 1 180px' }}>
         影像 {frameCount} frames / {lastFrameText}
       </div>
 
@@ -91,16 +94,28 @@ export function BackendStatusPanel({
           padding: '6px 12px',
           fontSize: '0.8rem',
           borderRadius: '8px',
-          background: isLocal ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          color: 'var(--text-primary)',
+          background: isLocal ? 'var(--accent-yellow)' : '#FFFFFF',
+          border: '2px solid #111111',
+          boxShadow: '2px 2px 0px #111111',
+          color: '#111111',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
+          fontWeight: 700,
         }}
       >
-        {isLocal ? '💻 本機後端' : '☁️ 雲端後端'}
+        {isLocal ? (
+          <>
+            <CustomEmoji name="local_pc" size={14} />
+            <span>本機後端</span>
+          </>
+        ) : (
+          <>
+            <CustomEmoji name="cloud" size={14} />
+            <span>雲端後端</span>
+          </>
+        )}
       </button>
 
       <button
@@ -114,3 +129,4 @@ export function BackendStatusPanel({
     </div>
   );
 }
+

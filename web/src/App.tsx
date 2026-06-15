@@ -126,21 +126,21 @@ export default function App() {
       let actionText = '';
       if (lastMessage.action === 'robot_move') {
         const dirMap: Record<string, string> = {
-          move_forward: '⬆️ 前進',
-          move_backward: '⬇️ 後退',
-          turn_left: '⬅️ 左轉',
-          turn_right: '➡️ 右轉',
-          dance: '💃 跳舞',
-          spin_around: '🔄 旋轉',
+          move_forward: '前進',
+          move_backward: '後退',
+          turn_left: '左轉',
+          turn_right: '右轉',
+          dance: '跳舞',
+          spin_around: '旋轉',
         };
         actionText = `${dirMap[lastMessage.args.action] || lastMessage.args.action} (${lastMessage.args.duration}ms)`;
       } else if (lastMessage.action === 'robot_expression') {
         const emoMap: Record<string, string> = {
-          happy: '😊 開心',
-          sad: '😢 難過',
-          angry: '😠 生氣',
-          surprised: '😮 驚訝',
-          neutral: '😐 平靜',
+          happy: '開心',
+          sad: '難過',
+          angry: '生氣',
+          surprised: '驚訝',
+          neutral: '平靜',
         };
         actionText = `表情：${emoMap[lastMessage.args.emotion] || lastMessage.args.emotion}`;
       }
@@ -381,28 +381,25 @@ export default function App() {
           maxWidth: '600px',
           padding: '20px 28px',
           marginBottom: '20px',
-          background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15))',
-          border: '1px solid rgba(59,130,246,0.3)',
+          background: 'linear-gradient(135deg, var(--bg-secondary), #FFFFFF)',
+          border: '2px solid var(--glass-border)',
           borderRadius: '20px',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '16px',
-          transition: 'all 0.35s ease',
+          transition: 'all 0.2s ease',
           position: 'relative',
           overflow: 'hidden',
+          boxShadow: 'var(--glass-shadow)',
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(139,92,246,0.25))';
-          e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 12px 40px rgba(59,130,246,0.2)';
+          e.currentTarget.style.transform = 'translate(-2px, -2px)';
+          e.currentTarget.style.boxShadow = '6px 6px 0px #111111';
         }}
         onMouseLeave={e => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15))';
-          e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)';
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = 'var(--glass-shadow)';
         }}
       >
         {/* Animated glow bg */}
@@ -413,7 +410,7 @@ export default function App() {
           width: '200px',
           height: '200px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%)',
+          background: 'radial-gradient(circle, rgba(0, 102, 255, 0.1), transparent 70%)',
           animation: 'float 6s ease-in-out infinite',
           pointerEvents: 'none',
         }} />
@@ -423,14 +420,14 @@ export default function App() {
           width: '56px',
           height: '56px',
           borderRadius: '16px',
-          background: 'rgba(255, 255, 255, 0.1)',
+          background: '#FFFFFF',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
           overflow: 'hidden',
-          boxShadow: '0 4px 16px rgba(244,114,182,0.3)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '2px 2px 0px #111111',
+          border: '2px solid #111111',
         }}>
           <img 
             src="/image/cute_robot_avatar.png" 

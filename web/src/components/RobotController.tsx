@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
-import { Mic, Square, Camera, CameraOff, Volume2, Cpu, Cog, ArrowLeft, Aperture } from 'lucide-react';
+import { Mic, Square, Camera, CameraOff, Volume2, Cpu, Cog, ArrowLeft, Aperture, Loader2 } from 'lucide-react';
 import { Joystick, type JoystickDirection } from './Joystick';
 import { SnapshotPanel, type Snapshot } from './SnapshotPanel';
 import { ChatLog, type ChatMessage } from './ChatLog';
 import { robotMove, robotStop } from '../api/robot';
+import { CustomEmoji } from './CustomEmoji';
 
 interface RobotControllerProps {
   isOpen: boolean;
@@ -113,7 +114,7 @@ export function RobotController({
 
   const statusColor = (s: string) => {
     if (s === 'online') return 'var(--success)';
-    if (s === 'standby') return '#F59E0B';
+    if (s === 'standby') return 'var(--accent-yellow)';
     return 'var(--danger)';
   };
 
@@ -132,7 +133,7 @@ export function RobotController({
       zIndex: 2000,
       background: 'var(--bg-primary)',
       backgroundImage:
-        'radial-gradient(circle at 15% 50%, rgba(59,130,246,0.12), transparent 25%), radial-gradient(circle at 85% 30%, rgba(139,92,246,0.12), transparent 25%)',
+        'radial-gradient(circle at 15% 50%, rgba(0, 102, 255, 0.08), transparent 25%), radial-gradient(circle at 85% 30%, rgba(255, 211, 0, 0.12), transparent 25%)',
       display: 'flex',
       flexDirection: 'column',
       animation: 'fadeIn 0.3s ease',
@@ -143,53 +144,56 @@ export function RobotController({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '12px 16px',
-        background: 'rgba(0,0,0,0.3)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        padding: '16px 20px',
+        background: '#FFFFFF',
+        borderBottom: '3px solid #111111',
         flexShrink: 0,
       }}>
         <button
           onClick={onClose}
+          className="btn-secondary"
           style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-primary)',
-            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             fontSize: '0.9rem',
-            padding: '6px 10px',
-            borderRadius: '8px',
-            transition: 'background 0.2s',
+            padding: '6px 12px',
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
         >
           <ArrowLeft size={18} />
           返回
         </button>
 
         <h2 style={{
-          fontSize: '1rem',
-          fontWeight: 700,
-          background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          letterSpacing: '0.04em',
+          fontSize: '1.2rem',
+          fontWeight: 800,
+          color: '#111111',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
         }}>
-          🤖 機器人操控台
+          <CustomEmoji name="robot" size={24} />
+          機器人操控台
         </h2>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '8px',
-            height: '8px',
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: '#FFFFFF',
+          border: '2px solid #111111',
+          padding: '6px 12px',
+          borderRadius: '10px',
+          boxShadow: '2px 2px 0px #111111',
+        }}>
+          <span style={{
+            width: '10px',
+            height: '10px',
             borderRadius: '50%',
             background: isConnected ? 'var(--success)' : 'var(--danger)',
-            boxShadow: isConnected ? '0 0 8px var(--success)' : 'none',
+            border: '1px solid #111111',
           }} />
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#111111' }}>
             {isConnected ? '已連線' : '離線'}
           </span>
         </div>
@@ -202,14 +206,14 @@ export function RobotController({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '16px',
-        gap: '16px',
+        padding: '24px 16px',
+        gap: '24px',
       }}>
         {/* Camera + Controls row */}
         <div style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '16px',
+          gap: '24px',
           justifyContent: 'center',
           alignItems: 'center',
           width: '100%',
@@ -220,22 +224,28 @@ export function RobotController({
             flex: '1 1 320px',
             maxWidth: '480px',
             aspectRatio: '4/3',
-            background: 'rgba(0,0,0,0.5)',
-            borderRadius: '16px',
+            background: '#111111',
+            borderRadius: '20px',
             overflow: 'hidden',
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            border: '2px solid #111111',
+            boxShadow: 'var(--glass-shadow)',
           }}>
             {imageUrl ? (
               <img src={imageUrl} alt="Camera" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-secondary)', gap: '8px' }}>
-                {cameraEnabled ? <Camera size={40} style={{ opacity: 0.4 }} /> : <CameraOff size={40} style={{ opacity: 0.4 }} />}
-                <span style={{ fontSize: '0.85rem' }}>{cameraEnabled ? '等待影像...' : '影像已關閉'}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#888888', gap: '12px' }}>
+                {cameraEnabled ? (
+                  <Camera size={48} style={{ opacity: 0.6, color: 'var(--accent-yellow)' }} />
+                ) : (
+                  <CameraOff size={48} style={{ opacity: 0.6, color: 'var(--danger)' }} />
+                )}
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}>
+                  {cameraEnabled ? '等待影像中...' : '影像已關閉'}
+                </span>
               </div>
             )}
 
@@ -243,7 +253,7 @@ export function RobotController({
             {flashActive && (
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'rgba(255,255,255,0.8)',
+                background: 'rgba(255,255,255,0.9)',
                 pointerEvents: 'none',
                 animation: 'flashFade 0.3s ease-out forwards',
                 zIndex: 10,
@@ -253,38 +263,56 @@ export function RobotController({
             {/* LIVE badge */}
             {imageUrl && (
               <div style={{
-                position: 'absolute', top: '10px', left: '10px',
-                background: 'rgba(0,0,0,0.6)', borderRadius: '8px',
-                padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '5px',
-                backdropFilter: 'blur(4px)',
+                position: 'absolute', top: '12px', left: '12px',
+                background: '#FFFFFF', borderRadius: '8px',
+                border: '2px solid #111111',
+                padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '6px',
+                boxShadow: '2px 2px 0px #111111',
+                zIndex: 5,
               }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', animation: 'pulse-glow 2s infinite' }} />
-                <span style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>LIVE</span>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: 'var(--success)',
+                  border: '1px solid #111111',
+                }} />
+                <span style={{ color: '#111111', fontSize: '0.75rem', fontWeight: 800 }}>LIVE</span>
               </div>
             )}
 
             {/* Camera controls */}
             <div style={{
-              position: 'absolute', bottom: '10px', right: '10px',
+              position: 'absolute', bottom: '12px', right: '12px',
               display: 'flex', gap: '8px',
+              zIndex: 5,
             }}>
               <button
                 onClick={onToggleCamera}
                 style={{
-                  background: 'rgba(0,0,0,0.6)',
-                  border: '1px solid rgba(255,255,255,0.15)',
+                  background: '#FFFFFF',
+                  border: '2px solid #111111',
                   borderRadius: '10px',
-                  padding: '6px 10px',
+                  padding: '6px 12px',
                   cursor: 'pointer',
-                  color: cameraEnabled ? '#fff' : 'var(--danger)',
+                  color: cameraEnabled ? '#111111' : 'var(--danger)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  fontSize: '0.75rem',
-                  backdropFilter: 'blur(4px)',
-                  transition: 'background 0.2s',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  boxShadow: '2px 2px 0px #111111',
+                  transition: 'all 0.15s ease',
                 }}
                 title={cameraEnabled ? '關閉影像' : '開啟影像'}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translate(-1px, -1px)';
+                  e.currentTarget.style.boxShadow = '3px 3px 0px #111111';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '2px 2px 0px #111111';
+                }}
               >
                 {cameraEnabled ? <Camera size={14} /> : <CameraOff size={14} />}
               </button>
@@ -292,22 +320,32 @@ export function RobotController({
                 <button
                   onClick={handleSnapshot}
                   style={{
-                    background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))',
-                    border: 'none',
+                    background: 'var(--accent-yellow)',
+                    border: '2px solid #111111',
                     borderRadius: '10px',
-                    padding: '6px 12px',
+                    padding: '6px 14px',
                     cursor: 'pointer',
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
+                    color: '#111111',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '5px',
-                    transition: 'all 0.25s',
-                    boxShadow: '0 4px 12px rgba(59,130,246,0.35)',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '2px 2px 0px #111111',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translate(-1px, -1px)';
+                    e.currentTarget.style.boxShadow = '3px 3px 0px #111111';
+                    e.currentTarget.style.background = 'var(--accent-blue)';
+                    e.currentTarget.style.color = '#FFFFFF';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = '2px 2px 0px #111111';
+                    e.currentTarget.style.background = 'var(--accent-yellow)';
+                    e.currentTarget.style.color = '#111111';
+                  }}
                   title="拍照"
                 >
                   <Aperture size={14} />
@@ -323,6 +361,11 @@ export function RobotController({
             flexDirection: 'column',
             alignItems: 'center',
             gap: '16px',
+            background: '#FFFFFF',
+            border: '2px solid #111111',
+            borderRadius: '20px',
+            padding: '20px 24px',
+            boxShadow: 'var(--glass-shadow)',
           }}>
             <Joystick
               size={160}
@@ -330,31 +373,41 @@ export function RobotController({
               onRelease={handleJoystickRelease}
               disabled={!robotConnected}
             />
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
               拖曳搖桿控制移動
             </span>
             {lastApiError && (
-              <span style={{ fontSize: '0.65rem', color: 'var(--danger)', maxWidth: '160px', textAlign: 'center' }}>
-                ⚠ {lastApiError}
+              <span style={{
+                fontSize: '0.75rem',
+                color: 'var(--danger)',
+                maxWidth: '180px',
+                textAlign: 'center',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}>
+                <CustomEmoji name="warning" size={14} />
+                <span>{lastApiError}</span>
               </span>
             )}
 
             {/* Voice button */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
               <button
                 style={{
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  border: `2px solid ${isRecording ? 'var(--danger)' : 'var(--accent-blue)'}`,
-                  background: isRecording ? 'var(--danger)' : 'var(--glass-bg)',
-                  color: isRecording ? '#fff' : 'var(--accent-blue)',
+                  border: '2px solid #111111',
+                  background: isRecording ? 'var(--danger)' : 'var(--accent-yellow)',
+                  color: isRecording ? '#FFFFFF' : '#111111',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'all 0.3s ease',
-                  boxShadow: isRecording ? '0 0 20px rgba(239,68,68,0.4)' : '0 4px 12px rgba(0,0,0,0.2)',
+                  transition: 'all 0.15s ease',
+                  boxShadow: isRecording ? '2px 2px 0px #111111' : '3px 3px 0px #111111',
                   animation: isRecording ? 'pulse-glow 1.5s infinite' : 'none',
                   transform: isRecording ? 'scale(1.1)' : 'scale(1)',
                 }}
@@ -368,27 +421,58 @@ export function RobotController({
                 className="btn-secondary"
                 onClick={onToggleVoiceMode}
                 style={{
-                  padding: '4px 8px',
-                  fontSize: '0.65rem',
-                  borderRadius: '6px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: 'var(--text-primary)',
+                  padding: '6px 12px',
+                  fontSize: '0.8rem',
+                  borderRadius: '8px',
+                  background: voiceMode === 'phone' ? '#FFFFFF' : 'var(--accent-blue)',
+                  color: voiceMode === 'phone' ? '#111111' : '#FFFFFF',
+                  border: '2px solid #111111',
+                  boxShadow: '2px 2px 0px #111111',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: 700,
                 }}
               >
-                {voiceMode === 'phone' ? '📱 手機收發' : '🤖 機器人收發'}
+                {voiceMode === 'phone' ? (
+                  <>
+                    <CustomEmoji name="phone" size={14} />
+                    <span>手機收發</span>
+                  </>
+                ) : (
+                  <>
+                    <CustomEmoji name="robot" size={14} />
+                    <span>機器人收發</span>
+                  </>
+                )}
               </button>
             </div>
             <span style={{
-              fontSize: '0.7rem',
-              color: isRecording ? 'var(--danger)' : 'var(--text-secondary)',
-              fontWeight: isRecording ? 600 : 400,
+              fontSize: '0.8rem',
+              color: isRecording ? 'var(--danger)' : 'var(--text-primary)',
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
             }}>
-              {isRecording ? '錄音中...' : (
-                robotStatus === 'speaking' ? '🔊 播放中' :
-                robotStatus === 'processing' ? '⏳ 處理中' :
+              {isRecording ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>錄音中...</span>
+                </>
+              ) : robotStatus === 'speaking' ? (
+                <>
+                  <Volume2 size={14} className="animate-bounce" />
+                  <span>播放中</span>
+                </>
+              ) : robotStatus === 'processing' ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>處理中</span>
+                </>
+              ) : (
                 '語音對話'
               )}
             </span>
@@ -407,19 +491,28 @@ export function RobotController({
           <button
             onClick={() => setShowComponents(!showComponents)}
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
+              background: '#FFFFFF',
+              border: '2px solid #111111',
+              borderRadius: '10px',
+              color: '#111111',
               fontSize: '0.85rem',
+              fontWeight: 800,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 4px',
-              transition: 'color 0.2s',
+              padding: '8px 16px',
+              boxShadow: '2px 2px 0px #111111',
+              transition: 'all 0.15s ease',
             }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translate(-1px, -1px)';
+              e.currentTarget.style.boxShadow = '3px 3px 0px #111111';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '2px 2px 0px #111111';
+            }}
           >
             <Cpu size={16} />
             零件狀態
@@ -434,7 +527,8 @@ export function RobotController({
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: '10px',
+              gap: '12px',
+              marginTop: '12px',
               animation: 'fadeIn 0.25s ease',
             }}>
               {components.map(comp => (
@@ -447,8 +541,9 @@ export function RobotController({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    transition: 'border-color 0.3s',
-                    borderColor: comp.status === 'online' ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)',
+                    background: '#FFFFFF',
+                    border: `2px solid #111111`,
+                    boxShadow: '2px 2px 0px #111111',
                   }}
                 >
                   <div style={{
@@ -460,6 +555,7 @@ export function RobotController({
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: statusColor(comp.status),
+                    border: `2px solid ${statusColor(comp.status)}`,
                     flexShrink: 0,
                   }}>
                     {comp.icon}
@@ -467,26 +563,26 @@ export function RobotController({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontSize: '0.8rem',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       color: 'var(--text-primary)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                     }}>{comp.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{comp.detail}</div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{comp.detail}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
                     <div style={{
-                      width: '6px',
-                      height: '6px',
+                      width: '8px',
+                      height: '8px',
                       borderRadius: '50%',
                       background: statusColor(comp.status),
-                      boxShadow: comp.status === 'online' ? `0 0 6px ${statusColor(comp.status)}` : 'none',
+                      border: '1px solid #111111',
                     }} />
                     <span style={{
-                      fontSize: '0.65rem',
+                      fontSize: '0.7rem',
                       color: statusColor(comp.status),
-                      fontWeight: 500,
+                      fontWeight: 800,
                     }}>
                       {statusLabel(comp.status)}
                     </span>
