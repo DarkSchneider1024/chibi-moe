@@ -166,12 +166,23 @@ export default function App() {
     if (isRecording) {
       setRobotStatus('listening');
       stopPlaying();
-    } else if (!isRecording && robotStatus === 'listening') {
-      setRobotStatus('processing');
     }
-  }, [isRecording, robotStatus, stopPlaying]);
+  }, [isRecording, stopPlaying]);
 
-  // Timeout protection for voice processing status
+  // Handle connection loss during active voice session
+  useEffect(() => {
+    if (!isConnected && (robotStatus === 'processing' || robotStatus === 'listening' || robotStatus === 'speaking')) {
+      setRobotStatus('idle');
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: 'system',
+        text: '⚠️ 與伺服器的連線已中斷。',
+        type: 'error'
+      }]);
+    }
+  }, [isConnected, robotStatus]);
+
+  // Timeout protection for voice processing status (12 seconds)
   useEffect(() => {
     let timeoutId: number | undefined;
 
@@ -184,7 +195,7 @@ export default function App() {
           text: '⚠️ 語音對話超時，伺服器未能在時間內回應。請稍後重試。',
           type: 'error'
         }]);
-      }, 25000); // 25 seconds timeout
+      }, 12000); // 12 seconds timeout
     }
 
     return () => {
@@ -200,7 +211,27 @@ export default function App() {
     const base64Audio = await stopRecording();
     if (base64Audio) {
       setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'user', text: '語音訊息', type: 'audio' }]);
-      sendMessage({ type: 'audio', data: base64Audio });
+      if (!isConnected) {
+        setRobotStatus('idle');
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          sender: 'system',
+          text: '⚠️ 傳送失敗：未連接至伺服器。',
+          type: 'error'
+        }]);
+        return;
+      }
+      setRobotStatus('processing');
+      const sent = sendMessage({ type: 'audio', data: base64Audio });
+      if (!sent) {
+        setRobotStatus('idle');
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          sender: 'system',
+          text: '⚠️ 語音傳送失敗，請確認連線狀態。',
+          type: 'error'
+        }]);
+      }
     } else {
       setRobotStatus('idle');
     }
