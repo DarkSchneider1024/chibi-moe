@@ -228,20 +228,32 @@ export default function App() {
     } else {
       const lastIp = localStorage.getItem('localComputerIp') || '';
       const localIp = prompt(
-        '請輸入您電腦的區域網路 IP (例如 192.168.1.100，若是本機測試網頁可直接輸入 localhost 或 127.0.0.1)：',
-        lastIp || '192.168.1.'
+        '請輸入您電腦的區域網路 IP (例如 192.168.10.171，網頁端在 HTTPS 下將自動使用 127.0.0.1 連線以繞過瀏覽器 Mixed Content 限制)：',
+        lastIp || '192.168.10.'
       );
       if (localIp === null) return; // User cancelled
       
       const trimmedIp = localIp.trim();
       if (trimmedIp) {
         localStorage.setItem('localComputerIp', trimmedIp);
-        newUrl = `ws://${trimmedIp}:3001`;
+        
+        // If web app is loaded over HTTPS, use 127.0.0.1 for browser connection to avoid mixed content block
+        const isHttps = window.location.protocol === 'https:';
+        newUrl = isHttps ? 'ws://127.0.0.1:3001' : `ws://${trimmedIp}:3001`;
+        
         setBackendUrl(newUrl);
         localStorage.setItem('backendUrl', newUrl);
+        
+        // Also send update config to robot using the actual IP
+        sendMessage({
+          type: 'update_config',
+          websocket_host: trimmedIp,
+          websocket_port: 3001,
+        });
+        alert(`已切換！\n網頁連線端：${newUrl}\n已同步機器人端至：${trimmedIp}:3001\n機器人收到指令後會重新啟動。`);
       }
     }
-  }, [backendUrl]);
+  }, [backendUrl, sendMessage]);
 
   const handleSyncToRobot = useCallback((targetUrl: string) => {
     let host = targetUrl.trim();
