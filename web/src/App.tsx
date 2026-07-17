@@ -417,9 +417,9 @@ export default function App() {
 
         {/* Robot icon */}
         <div style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: '16px',
+          width: '80px',
+          height: '80px',
+          borderRadius: '20px',
           background: '#FFFFFF',
           display: 'flex',
           alignItems: 'center',

@@ -34,27 +34,40 @@ export function RobotAvatar({ status }: RobotAvatarProps) {
       <div 
         className={`avatar-orb ${status !== 'idle' ? 'animating' : ''}`}
         style={{
-          width: '120px',
-          height: '120px',
-          borderRadius: '50%',
-          background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), ${getStatusColor()})`,
-          boxShadow: `0 0 30px ${getStatusColor()}`,
+          width: '150px',
+          height: '150px',
+          borderRadius: '24px',
+          background: '#FFFFFF',
+          border: '3px solid #111111',
+          boxShadow: `6px 6px 0px #111111, 0 0 30px ${getStatusColor()}`,
           transition: 'all 0.5s ease',
-          animation: status === 'speaking' || status === 'listening' ? 'pulse-glow 2s infinite' : 'float 6s ease-in-out infinite'
+          animation: status === 'speaking' || status === 'listening' ? 'pulse-glow 2s infinite' : 'float 6s ease-in-out infinite',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
+        <img 
+          src="/image/cute_robot_avatar.png" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+          alt="Gundam Robot Head" 
+        />
+        {/* Neon status indicator light */}
         <div style={{
           position: 'absolute',
-          top: '25%',
-          left: '20%',
-          width: '20px',
-          height: '20px',
-          background: 'rgba(255,255,255,0.9)',
+          bottom: '8px',
+          right: '8px',
+          width: '14px',
+          height: '14px',
           borderRadius: '50%',
-          filter: 'blur(2px)'
-        }}></div>
+          backgroundColor: getStatusColor(),
+          border: '2px solid #111111',
+          boxShadow: `0 0 10px ${getStatusColor()}`,
+        }} />
       </div>
-      <p style={{ marginTop: '1.5rem', fontWeight: 500, color: getStatusColor() }}>
+      <p style={{ marginTop: '1.5rem', fontWeight: 600, color: getStatusColor(), fontSize: '1.1rem' }}>
         {getStatusText()}
       </p>
     </div>
