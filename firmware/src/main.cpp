@@ -146,8 +146,10 @@ bool websocket_secure = true;
 bool shouldSaveConfig = false;
 
 WebSocketsClient webSocket;
+// Camera stays off until the web UI enables it: the sensor's continuous DVP
+// clock degrades this board's WiFi radio badly enough to break the link.
 bool camera_initialized = false;
-bool camera_enabled = true;
+bool camera_enabled = false;
 unsigned long last_frame_time = 0;
 
 // Base64 Helpers
@@ -405,12 +407,13 @@ void initCamera() {
   config.pin_sccb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000;
+  // 10MHz XCLK + QVGA: lower current draw so WiFi TX stays stable on weak supplies
+  config.xclk_freq_hz = 10000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
   if(psramFound()){
-    config.frame_size = FRAMESIZE_VGA;
-    config.jpeg_quality = 10;
+    config.frame_size = FRAMESIZE_QVGA;
+    config.jpeg_quality = 12;
     config.fb_count = 2;
   } else {
     config.frame_size = FRAMESIZE_QVGA;
@@ -431,6 +434,13 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED:
       Serial.println("[WSc] Disconnected!");
+      // Power the camera down so the radio recovers and reconnection can succeed
+      if (camera_initialized) {
+        esp_camera_deinit();
+        camera_initialized = false;
+        camera_enabled = false;
+        Serial.println("Camera deinitialized to recover WiFi.");
+      }
       break;
     case WStype_CONNECTED:
       Serial.printf("[WSc] Connected to url: %s\n", payload);
@@ -491,6 +501,14 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
           Serial.println("--------------------");
         } else if (msgType == "camera_control") {
           camera_enabled = doc["enabled"].as<bool>();
+          if (camera_enabled && !camera_initialized) {
+            Serial.println("Camera enabled via web; initializing...");
+            initCamera();
+          } else if (!camera_enabled && camera_initialized) {
+            esp_camera_deinit();
+            camera_initialized = false;
+            Serial.println("Camera disabled via web; deinitialized.");
+          }
         } else if (msgType == "audio_out") {
           String base64Data = doc["data"].as<String>();
           if (mp3_decode_buffer) {
@@ -563,11 +581,15 @@ void setup() {
   }
 
   loadConfig();
-  initCamera();
   initMicrophone();
 
   WiFiManager wifiManager;
   wifiManager.setSaveConfigCallback(saveConfigCallback);
+  // Retry harder before falling into the portal, and reboot out of the portal
+  // after 3 minutes so a transient scan miss can't strand the robot forever.
+  wifiManager.setConnectTimeout(15);
+  wifiManager.setConnectRetries(3);
+  wifiManager.setConfigPortalTimeout(180);
 
   WiFiManagerParameter custom_server_ip("server", "Server IP/Host", websocket_host.c_str(), 40);
   wifiManager.addParameter(&custom_server_ip);
@@ -585,6 +607,9 @@ void setup() {
   }
 
   Serial.println("\nWiFi Connected!");
+  Serial.printf("WiFi RSSI: %d dBm, channel: %d\n", WiFi.RSSI(), WiFi.channel());
+  // Lower TX power to reduce peak current draw; camera + WiFi bursts brown out weak supplies
+  WiFi.setTxPower(WIFI_POWER_11dBm);
   WiFi.setSleep(false);
   configureReliableDns();
 
@@ -709,7 +734,7 @@ void loop() {
 
   // Stream camera frames
   if (camera_initialized && camera_enabled && webSocket.isConnected() && !is_recording) {
-    if (millis() - last_frame_time > 100) {
+    if (millis() - last_frame_time > 200) {
       last_frame_time = millis();
       camera_fb_t * fb = esp_camera_fb_get();
       if (!fb) {
