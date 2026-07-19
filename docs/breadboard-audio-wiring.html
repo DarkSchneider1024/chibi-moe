@@ -200,6 +200,155 @@
     </div>
   </div>
 
+  <h2>麵包板實體配置圖</h2>
+  <div class="panel diagram-wrap">
+    <svg viewBox="0 0 1020 662" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="麵包板實體配置圖：ESP32 飛線至麵包板上的 INMP441 與 MAX98357A">
+      <!-- wires (under components) -->
+      <g fill="none" stroke-width="4" stroke-linecap="round">
+        <path d="M300,156 C340,200 370,330 390,380" stroke="var(--w-5v)"/>
+        <path d="M300,192 C336,240 366,350 390,408" stroke="var(--w-gnd)"/>
+        <path d="M462,166 C400,180 340,300 300,324" stroke="var(--w-sck)"/>
+        <path d="M480,148 C400,160 340,270 300,288" stroke="var(--w-ws)"/>
+        <path d="M498,130 C420,130 340,240 300,252" stroke="var(--w-sd)"/>
+        <path d="M498,302 C380,330 310,220 300,120" stroke="var(--w-33)"/>
+        <path d="M480,302 C486,350 486,380 484,408" stroke="var(--w-gnd)"/>
+        <path d="M462,320 C456,360 458,390 460,408" stroke="var(--w-gnd)"/>
+        <path d="M786,148 C830,220 830,330 810,380" stroke="var(--w-5v)"/>
+        <path d="M768,166 C820,240 820,350 792,408" stroke="var(--w-gnd)"/>
+        <path d="M678,148 C500,60 330,200 300,432" stroke="var(--w-lrc)"/>
+        <path d="M714,148 C540,60 350,200 300,396" stroke="var(--w-din)"/>
+        <path d="M696,166 C520,80 340,240 300,468" stroke="var(--w-bclk)"/>
+      </g>
+
+      <!-- breadboard -->
+      <rect x="368" y="90" width="566" height="470" rx="10" fill="var(--board)" stroke="var(--line)"/>
+      <g font-family="Consolas,monospace" font-size="11" fill="var(--muted)" text-anchor="middle">
+        <text x="390" y="112">1</text><text x="462" y="112">5</text><text x="552" y="112">10</text>
+        <text x="642" y="112">15</text><text x="732" y="112">20</text><text x="822" y="112">25</text><text x="912" y="112">30</text>
+      </g>
+      <!-- hole rows: top block -->
+      <g stroke="var(--muted)" stroke-width="6" stroke-linecap="round" stroke-dasharray="4 14" opacity="0.55">
+        <line x1="388" y1="130" x2="916" y2="130"/>
+        <line x1="388" y1="148" x2="916" y2="148"/>
+        <line x1="388" y1="166" x2="916" y2="166"/>
+        <line x1="388" y1="184" x2="916" y2="184"/>
+        <line x1="388" y1="202" x2="916" y2="202"/>
+        <line x1="388" y1="266" x2="916" y2="266"/>
+        <line x1="388" y1="284" x2="916" y2="284"/>
+        <line x1="388" y1="302" x2="916" y2="302"/>
+        <line x1="388" y1="320" x2="916" y2="320"/>
+        <line x1="388" y1="338" x2="916" y2="338"/>
+      </g>
+      <!-- center gap -->
+      <rect x="368" y="222" width="566" height="24" fill="var(--bg)" opacity="0.6"/>
+      <!-- rails -->
+      <line x1="380" y1="368" x2="922" y2="368" stroke="var(--w-5v)" stroke-width="2"/>
+      <g stroke="var(--w-5v)" stroke-width="6" stroke-linecap="round" stroke-dasharray="4 14" opacity="0.7">
+        <line x1="388" y1="380" x2="916" y2="380"/>
+      </g>
+      <line x1="380" y1="420" x2="922" y2="420" stroke="var(--w-sck)" stroke-width="2"/>
+      <g stroke="var(--w-gnd)" stroke-width="6" stroke-linecap="round" stroke-dasharray="4 14" opacity="0.7">
+        <line x1="388" y1="408" x2="916" y2="408"/>
+      </g>
+      <g font-family="Consolas,monospace" font-size="13" font-weight="600">
+        <text x="392" y="356" fill="var(--w-5v)">＋ 紅軌 = 5V</text>
+        <text x="392" y="444" fill="var(--w-sck)">－ 藍軌 = GND（共地）</text>
+      </g>
+      <text x="651" y="490" text-anchor="middle" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">部分麵包板電源軌中段有斷點，跨段要補跳線</text>
+      <text x="651" y="522" text-anchor="middle" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">麥克風插第 5–7 列（跨中央溝槽）、功放插第 17–23 列</text>
+
+      <!-- ESP32 -->
+      <rect x="40" y="70" width="260" height="520" rx="12" fill="var(--board)" stroke="var(--line)"/>
+      <text x="170" y="104" text-anchor="middle" fill="var(--ink)" font-size="17" font-weight="600" font-family="'Segoe UI','Noto Sans TC',sans-serif">ESP32-S3-CAM</text>
+      <text x="170" y="565" text-anchor="middle" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">不上麵包板，用杜邦線飛線</text>
+      <g font-family="Consolas,monospace" font-size="14" fill="var(--ink)" text-anchor="end">
+        <text x="284" y="125">3V3</text>
+        <text x="284" y="161">5V</text>
+        <text x="284" y="197">GND</text>
+        <text x="284" y="257">G39</text>
+        <text x="284" y="293">G40</text>
+        <text x="284" y="329">G41</text>
+        <text x="284" y="401">G42</text>
+        <text x="284" y="437">G1</text>
+        <text x="284" y="473">G2</text>
+      </g>
+      <g fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5">
+        <circle cx="300" cy="120" r="5"/><circle cx="300" cy="156" r="5"/><circle cx="300" cy="192" r="5"/>
+        <circle cx="300" cy="252" r="5"/><circle cx="300" cy="288" r="5"/><circle cx="300" cy="324" r="5"/>
+        <circle cx="300" cy="396" r="5"/><circle cx="300" cy="432" r="5"/><circle cx="300" cy="468" r="5"/>
+      </g>
+
+      <!-- INMP441 round module across the gap, cols 5-7 -->
+      <circle cx="480" cy="234" r="47" fill="#C9A24C" stroke="#8F7434" stroke-width="2"/>
+      <circle cx="480" cy="222" r="7" fill="#6E5827"/>
+      <text x="480" y="245" text-anchor="middle" fill="#3B2F12" font-size="13" font-weight="700" font-family="'Segoe UI','Noto Sans TC',sans-serif">INMP441</text>
+      <g font-family="Consolas,monospace" font-size="10" fill="#3B2F12" text-anchor="middle" font-weight="600">
+        <text x="462" y="212">SCK</text><text x="481" y="202">WS</text><text x="500" y="212">SD</text>
+        <text x="462" y="270">L/R</text><text x="481" y="278">GND</text><text x="500" y="270">VDD</text>
+      </g>
+      <g fill="#3B2F12">
+        <circle cx="462" cy="202" r="3.5"/><circle cx="480" cy="202" r="3.5"/><circle cx="498" cy="202" r="3.5"/>
+        <circle cx="462" cy="266" r="3.5"/><circle cx="480" cy="266" r="3.5"/><circle cx="498" cy="266" r="3.5"/>
+      </g>
+
+      <!-- MAX98357A cols 17-23, body above board -->
+      <rect x="668" y="56" width="128" height="66" rx="6" fill="#7B4FA0" stroke="#5A3778" stroke-width="2"/>
+      <text x="732" y="80" text-anchor="middle" fill="#F2E9FA" font-size="12" font-weight="700" font-family="'Segoe UI','Noto Sans TC',sans-serif">MAX98357A</text>
+      <g font-family="Consolas,monospace" font-size="9" fill="#F2E9FA" text-anchor="middle">
+        <text x="678" y="112">LRC</text><text x="696" y="102">BCLK</text><text x="714" y="112">DIN</text>
+        <text x="732" y="102">GAIN</text><text x="750" y="112">SD</text><text x="768" y="102">GND</text><text x="786" y="112">Vin</text>
+      </g>
+      <g stroke="#5A3778" stroke-width="2.5">
+        <line x1="678" y1="122" x2="678" y2="130"/><line x1="696" y1="122" x2="696" y2="130"/>
+        <line x1="714" y1="122" x2="714" y2="130"/><line x1="732" y1="122" x2="732" y2="130"/>
+        <line x1="750" y1="122" x2="750" y2="130"/><line x1="768" y1="122" x2="768" y2="130"/>
+        <line x1="786" y1="122" x2="786" y2="130"/>
+      </g>
+
+      <!-- speaker wired to amp terminal -->
+      <rect x="845" y="14" width="88" height="62" rx="8" fill="var(--board)" stroke="var(--line)"/>
+      <circle cx="889" cy="45" r="20" fill="none" stroke="var(--muted)" stroke-width="2"/>
+      <circle cx="889" cy="45" r="8" fill="none" stroke="var(--muted)" stroke-width="2"/>
+      <text x="889" y="92" text-anchor="middle" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">喇叭（鎖進綠端子）</text>
+      <g fill="none" stroke-width="3.5" stroke-linecap="round">
+        <path d="M796,66 C820,52 830,44 845,38" stroke="var(--w-5v)"/>
+        <path d="M796,82 C822,70 832,62 845,56" stroke="var(--w-gnd)"/>
+      </g>
+
+      <!-- plugged pin dots -->
+      <g stroke="#fff" stroke-width="1.2">
+        <circle cx="462" cy="202" r="4.5" fill="var(--w-sck)"/><circle cx="480" cy="202" r="4.5" fill="var(--w-ws)"/><circle cx="498" cy="202" r="4.5" fill="var(--w-sd)"/>
+        <circle cx="462" cy="266" r="4.5" fill="var(--w-gnd)"/><circle cx="480" cy="266" r="4.5" fill="var(--w-gnd)"/><circle cx="498" cy="266" r="4.5" fill="var(--w-33)"/>
+        <circle cx="678" cy="130" r="4.5" fill="var(--w-lrc)"/><circle cx="696" cy="130" r="4.5" fill="var(--w-bclk)"/><circle cx="714" cy="130" r="4.5" fill="var(--w-din)"/>
+        <circle cx="732" cy="130" r="4.5" fill="var(--muted)"/><circle cx="750" cy="130" r="4.5" fill="var(--muted)"/>
+        <circle cx="768" cy="130" r="4.5" fill="var(--w-gnd)"/><circle cx="786" cy="130" r="4.5" fill="var(--w-5v)"/>
+        <circle cx="390" cy="380" r="4.5" fill="var(--w-5v)"/><circle cx="810" cy="380" r="4.5" fill="var(--w-5v)"/>
+        <circle cx="390" cy="408" r="4.5" fill="var(--w-gnd)"/><circle cx="792" cy="408" r="4.5" fill="var(--w-gnd)"/>
+        <circle cx="484" cy="408" r="4.5" fill="var(--w-gnd)"/><circle cx="460" cy="408" r="4.5" fill="var(--w-gnd)"/>
+      </g>
+
+      <!-- callout: VDD direct to 3V3 -->
+      <text x="340" y="646" fill="var(--w-33)" font-size="13" font-weight="600" font-family="'Segoe UI','Noto Sans TC',sans-serif">▲ 橘線：麥克風 VDD 直接接 ESP32 的 3V3 腳，不可從 5V 紅軌取電！</text>
+    </svg>
+    <div class="legend">
+      <span><i class="chip" style="background:var(--w-5v)"></i>5V（紅軌）</span>
+      <span><i class="chip" style="background:var(--w-33)"></i>3.3V（直連）</span>
+      <span><i class="chip" style="background:var(--w-gnd)"></i>GND（藍軌）</span>
+      <span><i class="chip" style="background:var(--w-sd)"></i>SD→G39</span>
+      <span><i class="chip" style="background:var(--w-ws)"></i>WS→G40</span>
+      <span><i class="chip" style="background:var(--w-sck)"></i>SCK→G41</span>
+      <span><i class="chip" style="background:var(--w-din)"></i>DIN→G42</span>
+      <span><i class="chip" style="background:var(--w-lrc)"></i>LRC→G1</span>
+      <span><i class="chip" style="background:var(--w-bclk)"></i>BCLK→G2</span>
+    </div>
+    <ul style="margin-top:12px">
+      <li><b>麥克風（第 5–7 列）跨中央溝槽插</b>：一邊三支腳在上半區、另一邊三支在下半區，兩排腳才不會短路。接線接在<b>同一列的空孔</b>（同列五孔相通）。</li>
+      <li><b>功放（第 17–23 列）七支腳插同一橫排</b>，每支腳佔一列；接線同樣插各腳同列的空孔。GAIN、SD（第 20、21 列）懸空不接。</li>
+      <li><b>圖中模組腳位順序是常見排列，實際請以你模組板上的絲印文字為準</b>——找到 VDD/SD/WS/SCK 等字樣後照顏色對應接到 ESP32 即可，位置差一兩列無妨，重點是「腳名對腳名」。</li>
+      <li>ESP32 板身較寬，不上麵包板，直接用<b>公對母杜邦線</b>從板上排針飛線過來。</li>
+    </ul>
+  </div>
+
   <div class="callout">
     <strong>⚠️ 上電前必讀</strong>
     <ul>
