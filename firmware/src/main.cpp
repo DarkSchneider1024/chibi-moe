@@ -659,7 +659,11 @@ void loop() {
 
   // BOOT button audio recording logic
   bool current_button_state = digitalRead(BOOT_BUTTON_PIN);
-  if (current_button_state == LOW && last_button_state == HIGH) {
+  // Arm the button only after it has read HIGH once: GPIO0 can read LOW
+  // transiently right after reset, which used to start a phantom recording.
+  static bool button_armed = false;
+  if (current_button_state == HIGH) button_armed = true;
+  if (button_armed && current_button_state == LOW && last_button_state == HIGH) {
     // Button pressed: start recording
     if (!is_recording && record_buffer) {
       is_recording = true;
@@ -727,8 +731,9 @@ void loop() {
 
     if (recorded_samples >= MAX_RECORD_SAMPLES) {
       Serial.println("Buffer full, stopping recording automatically.");
-      // Trigger release event logic
-      last_button_state = HIGH; 
+      // The release branch fires on current==HIGH && last==LOW, so force last LOW
+      // (setting it HIGH here left is_recording stuck true, blocking the camera)
+      last_button_state = LOW;
     }
   }
 
