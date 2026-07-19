@@ -1,0 +1,293 @@
+<title>chibi-moe 語音硬體接線圖解</title>
+<style>
+  :root {
+    --bg: #F2F3F1;
+    --panel: #FFFFFF;
+    --ink: #20262B;
+    --muted: #5C666E;
+    --line: #D8DCD9;
+    --accent: #2C6E6A;
+    --board: #E9EDEA;
+    --w-5v: #D64545;
+    --w-33: #E08A2E;
+    --w-gnd: #444B53;
+    --w-sd: #D9A521;
+    --w-ws: #3F9A5F;
+    --w-sck: #3D6FD6;
+    --w-din: #8A5FC9;
+    --w-bclk: #2E8FA3;
+    --w-lrc: #C24B8E;
+    --ok: #2F7D4F;
+    --fix: #B0691E;
+    --warn-bg: #FBF3E4;
+    --warn-line: #E3C98F;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #171B1E; --panel: #1F2428; --ink: #E4E8E9; --muted: #98A2A8;
+      --line: #343B40; --accent: #6FBFB9; --board: #262D31;
+      --w-gnd: #9AA3AB; --ok: #6BC28F; --fix: #DFA55C;
+      --warn-bg: #2A2620; --warn-line: #5C4E2E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171B1E; --panel: #1F2428; --ink: #E4E8E9; --muted: #98A2A8;
+    --line: #343B40; --accent: #6FBFB9; --board: #262D31;
+    --w-gnd: #9AA3AB; --ok: #6BC28F; --fix: #DFA55C;
+    --warn-bg: #2A2620; --warn-line: #5C4E2E;
+  }
+  :root[data-theme="light"] {
+    --bg: #F2F3F1; --panel: #FFFFFF; --ink: #20262B; --muted: #5C666E;
+    --line: #D8DCD9; --accent: #2C6E6A; --board: #E9EDEA;
+    --w-gnd: #444B53; --ok: #2F7D4F; --fix: #B0691E;
+    --warn-bg: #FBF3E4; --warn-line: #E3C98F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+    line-height: 1.65; margin: 0; padding: 24px 16px 64px;
+  }
+  main { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; margin: 8px 0 4px; text-wrap: balance; }
+  h2 {
+    font-size: 1.15rem; margin: 40px 0 12px; color: var(--accent);
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .sub { color: var(--muted); margin: 0 0 8px; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: .14em; font-size: .72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  code, .mono {
+    font-family: "Cascadia Code", Consolas, "SF Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  code { background: var(--board); padding: 1px 6px; border-radius: 4px; font-size: .88em; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .diagram-wrap { overflow-x: auto; }
+  .diagram-wrap svg { min-width: 720px; display: block; margin: 0 auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: .85rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .chip { width: 18px; height: 4px; border-radius: 2px; display: inline-block; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { border: 1px solid var(--line); padding: 7px 12px; text-align: left; }
+  th { background: var(--board); font-weight: 600; }
+  td.mono { white-space: nowrap; }
+  .tbl-wrap { overflow-x: auto; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+  ol.steps { padding-left: 1.3em; margin: 8px 0; }
+  ol.steps li { margin-bottom: 10px; }
+  .status-ok { color: var(--ok); font-weight: 600; white-space: nowrap; }
+  .status-fix { color: var(--fix); font-weight: 600; white-space: nowrap; }
+  .callout {
+    background: var(--warn-bg); border: 1px solid var(--warn-line);
+    border-radius: 10px; padding: 14px 18px; margin: 14px 0;
+  }
+  .callout strong { display: block; margin-bottom: 4px; }
+  ul { margin: 6px 0; padding-left: 1.3em; }
+  li { margin-bottom: 4px; }
+</style>
+<main>
+  <p class="eyebrow">chibi-moe · 硬體組裝指南</p>
+  <h1>麥克風 + 喇叭 接線圖解</h1>
+  <p class="sub">ESP32-S3-CAM（GOOUUU）× INMP441 麥克風 × MAX98357A 功放 × 3W 喇叭 —— 腳位對應韌體 <span class="mono">firmware/src/main.cpp</span>，接完即可用。</p>
+
+  <h2>接線總圖</h2>
+  <div class="panel diagram-wrap">
+    <svg viewBox="0 0 900 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ESP32-S3 與 INMP441、MAX98357A 接線圖">
+      <g fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="3">
+        <path d="M280,110 H500 V120 H540" stroke="var(--w-33)"/>
+        <path d="M280,154 H330 V400 H540" stroke="var(--w-5v)"/>
+        <path d="M280,198 H470" stroke="var(--w-gnd)"/>
+        <path d="M470,150 V430" stroke="var(--w-gnd)"/>
+        <path d="M470,150 H540" stroke="var(--w-gnd)"/>
+        <path d="M470,430 H540" stroke="var(--w-gnd)"/>
+        <path d="M540,180 H505 V150" stroke="var(--w-gnd)"/>
+        <path d="M280,262 H440 V210 H540" stroke="var(--w-sd)"/>
+        <path d="M280,306 H410 V240 H540" stroke="var(--w-ws)"/>
+        <path d="M280,350 H380 V270 H540" stroke="var(--w-sck)"/>
+        <path d="M280,414 H440 V460 H540" stroke="var(--w-din)"/>
+        <path d="M280,458 H410 V520 H540" stroke="var(--w-lrc)"/>
+        <path d="M280,502 H380 V490 H540" stroke="var(--w-bclk)"/>
+        <path d="M790,430 H830" stroke="var(--w-5v)"/>
+        <path d="M790,470 H830" stroke="var(--w-gnd)"/>
+      </g>
+      <g fill="var(--w-gnd)">
+        <circle cx="470" cy="198" r="4.5"/>
+        <circle cx="505" cy="150" r="4.5"/>
+      </g>
+
+      <!-- ESP32 board -->
+      <rect x="40" y="60" width="240" height="500" rx="12" fill="var(--board)" stroke="var(--line)"/>
+      <text x="160" y="92" text-anchor="middle" fill="var(--ink)" font-size="17" font-weight="600" font-family="'Segoe UI','Noto Sans TC',sans-serif">ESP32-S3-CAM</text>
+      <text x="160" y="540" text-anchor="middle" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">BOOT 鍵 (GPIO0) = 按住錄音</text>
+      <g font-family="Consolas,monospace" font-size="14" fill="var(--ink)" text-anchor="end">
+        <text x="264" y="115">3V3</text>
+        <text x="264" y="159">5V</text>
+        <text x="264" y="203">GND</text>
+        <text x="264" y="267">G39</text>
+        <text x="264" y="311">G40</text>
+        <text x="264" y="355">G41</text>
+        <text x="264" y="419">G42</text>
+        <text x="264" y="463">G1</text>
+        <text x="264" y="507">G2</text>
+      </g>
+      <g fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5">
+        <circle cx="280" cy="110" r="5"/><circle cx="280" cy="154" r="5"/><circle cx="280" cy="198" r="5"/>
+        <circle cx="280" cy="262" r="5"/><circle cx="280" cy="306" r="5"/><circle cx="280" cy="350" r="5"/>
+        <circle cx="280" cy="414" r="5"/><circle cx="280" cy="458" r="5"/><circle cx="280" cy="502" r="5"/>
+      </g>
+
+      <!-- INMP441 -->
+      <rect x="540" y="80" width="250" height="220" rx="12" fill="var(--board)" stroke="var(--line)"/>
+      <text x="665" y="108" text-anchor="middle" fill="var(--ink)" font-size="16" font-weight="600" font-family="'Segoe UI','Noto Sans TC',sans-serif">INMP441 麥克風</text>
+      <g font-family="Consolas,monospace" font-size="14" fill="var(--ink)">
+        <text x="556" y="125">VDD</text>
+        <text x="556" y="155">GND</text>
+        <text x="556" y="185">L/R</text>
+        <text x="556" y="215">SD</text>
+        <text x="556" y="245">WS</text>
+        <text x="556" y="275">SCK</text>
+      </g>
+      <g fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5">
+        <circle cx="540" cy="120" r="5"/><circle cx="540" cy="150" r="5"/><circle cx="540" cy="180" r="5"/>
+        <circle cx="540" cy="210" r="5"/><circle cx="540" cy="240" r="5"/><circle cx="540" cy="270" r="5"/>
+      </g>
+      <text x="700" y="185" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">L/R 接 GND＝左聲道</text>
+
+      <!-- MAX98357A -->
+      <rect x="540" y="360" width="250" height="220" rx="12" fill="var(--board)" stroke="var(--line)"/>
+      <text x="665" y="390" text-anchor="middle" fill="var(--ink)" font-size="16" font-weight="600" font-family="'Segoe UI','Noto Sans TC',sans-serif">MAX98357A 功放</text>
+      <g font-family="Consolas,monospace" font-size="14" fill="var(--ink)">
+        <text x="556" y="405">Vin</text>
+        <text x="556" y="435">GND</text>
+        <text x="556" y="465">DIN</text>
+        <text x="556" y="495">BCLK</text>
+        <text x="556" y="525">LRC</text>
+      </g>
+      <g fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5">
+        <circle cx="540" cy="400" r="5"/><circle cx="540" cy="430" r="5"/><circle cx="540" cy="460" r="5"/>
+        <circle cx="540" cy="490" r="5"/><circle cx="540" cy="520" r="5"/>
+      </g>
+      <text x="668" y="560" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">GAIN、SD 腳懸空即可</text>
+      <g font-family="Consolas,monospace" font-size="13" fill="var(--ink)" text-anchor="end">
+        <text x="782" y="425">＋</text>
+        <text x="782" y="475">－</text>
+      </g>
+
+      <!-- Speaker -->
+      <rect x="830" y="395" width="58" height="110" rx="10" fill="var(--board)" stroke="var(--line)"/>
+      <circle cx="859" cy="450" r="22" fill="none" stroke="var(--muted)" stroke-width="2"/>
+      <circle cx="859" cy="450" r="10" fill="none" stroke="var(--muted)" stroke-width="2"/>
+      <text x="859" y="520" text-anchor="middle" fill="var(--muted)" font-size="12" font-family="'Segoe UI','Noto Sans TC',sans-serif">喇叭</text>
+    </svg>
+    <div class="legend">
+      <span><i class="chip" style="background:var(--w-5v)"></i>5V 電源</span>
+      <span><i class="chip" style="background:var(--w-33)"></i>3.3V 電源</span>
+      <span><i class="chip" style="background:var(--w-gnd)"></i>GND 共地</span>
+      <span><i class="chip" style="background:var(--w-sd)"></i>麥克風資料 SD</span>
+      <span><i class="chip" style="background:var(--w-ws)"></i>麥克風 WS</span>
+      <span><i class="chip" style="background:var(--w-sck)"></i>麥克風 SCK</span>
+      <span><i class="chip" style="background:var(--w-din)"></i>喇叭資料 DIN</span>
+      <span><i class="chip" style="background:var(--w-bclk)"></i>喇叭 BCLK</span>
+      <span><i class="chip" style="background:var(--w-lrc)"></i>喇叭 LRC</span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>⚠️ 上電前必讀</strong>
+    <ul>
+      <li><b>INMP441 只能接 3.3V</b>——接到 5V 會燒毀麥克風。</li>
+      <li>MAX98357A 的 Vin 接 5V（2.5–5.5V 皆可），喇叭鎖進綠色端子，正負反了只是相位相反、不會壞。</li>
+      <li>兩塊模組的 GND 都必須與 ESP32 共地，麥克風 <code>L/R</code> 也接 GND（韌體設定為左聲道）。</li>
+      <li>你照片裡的 MAX98357A <b>排針和綠色端子還沒焊</b>，要先焊上才能插麵包板。INMP441 的黃色排針已附。</li>
+    </ul>
+  </div>
+
+  <h2>接線對照表</h2>
+  <div class="cols">
+    <div class="tbl-wrap"><table>
+      <tr><th colspan="2">INMP441 麥克風（收音）</th></tr>
+      <tr><th>模組腳位</th><th>接到 ESP32</th></tr>
+      <tr><td class="mono">VDD</td><td class="mono">3V3</td></tr>
+      <tr><td class="mono">GND</td><td class="mono">GND</td></tr>
+      <tr><td class="mono">SD</td><td class="mono">G39</td></tr>
+      <tr><td class="mono">WS</td><td class="mono">G40</td></tr>
+      <tr><td class="mono">SCK</td><td class="mono">G41</td></tr>
+      <tr><td class="mono">L/R</td><td class="mono">GND</td></tr>
+    </table></div>
+    <div class="tbl-wrap"><table>
+      <tr><th colspan="2">MAX98357A 功放（播音）</th></tr>
+      <tr><th>模組腳位</th><th>接到 ESP32</th></tr>
+      <tr><td class="mono">Vin</td><td class="mono">5V</td></tr>
+      <tr><td class="mono">GND</td><td class="mono">GND</td></tr>
+      <tr><td class="mono">DIN</td><td class="mono">G42</td></tr>
+      <tr><td class="mono">BCLK</td><td class="mono">G2</td></tr>
+      <tr><td class="mono">LRC</td><td class="mono">G1</td></tr>
+      <tr><td class="mono">GAIN / SD</td><td>懸空（預設 9dB / 開啟）</td></tr>
+    </table></div>
+  </div>
+  <p class="sub">六條訊號線（G39–G42、G1、G2）都在板子同一排針上，對照絲印找即可；電源腳在另一排。</p>
+
+  <h2>組裝步驟</h2>
+  <div class="panel">
+    <ol class="steps">
+      <li><b>焊接</b>：把黃色排針焊到 MAX98357A（元件面朝上、針腳朝下插麵包板），綠色螺絲端子焊到喇叭輸出孔。</li>
+      <li><b>佈局</b>：兩塊模組插上麵包板中間區，跨槽插避免腳位互相短路；ESP32 板太寬可不上麵包板，直接用母對母杜邦線飛線。</li>
+      <li><b>先接電源</b>：紅線 5V→功放 Vin、橘線 3V3→麥克風 VDD、黑線把兩塊 GND 與 L/R 全部接回 ESP32 GND（可用麵包板藍色軌做共地）。</li>
+      <li><b>再接訊號</b>：照上表接六條訊號線，顏色跟圖例一致最好查錯。</li>
+      <li><b>檢查後上電</b>：確認 VDD 沒接到 5V、無相鄰腳短路，再插 USB。</li>
+    </ol>
+  </div>
+
+  <h2>韌體 / 後端功能盤點（2026-07-19）</h2>
+  <div class="tbl-wrap"><table>
+    <tr><th>功能</th><th>狀態</th><th>說明</th></tr>
+    <tr><td>WiFi 連線與自動重試</td><td class="status-ok">✅ 完善</td><td>失敗重試 3 次、設定模式 3 分鐘後自動重開機</td></tr>
+    <tr><td>WebSocket 連線 + 斷線自復原</td><td class="status-ok">✅ 完善</td><td>5 秒自動重連；斷線時自動關相機讓 WiFi 恢復</td></tr>
+    <tr><td>相機串流</td><td class="status-ok">✅ 可用</td><td>網頁開啟才啟動（此板相機會干擾 WiFi）；約 4fps QVGA</td></tr>
+    <tr><td>錄音按鍵（BOOT 長按）</td><td class="status-fix">🔧 今日修復</td><td>修掉錄音狀態卡死 + 開機誤觸發</td></tr>
+    <tr><td>錄音上傳（WAV→後端）</td><td class="status-fix">🔧 今日修復</td><td>原 JSON 緩衝 2KB 裝不下 340KB 音訊、資料必為空；已改手動組 JSON</td></tr>
+    <tr><td>後端 AI 對話（Gemini 2.5 Flash）</td><td class="status-fix">🔧 今日修復</td><td>機器人連線原本拿不到 API Key、必被拒絕；已加全域 fallback</td></tr>
+    <tr><td>TTS 語音回覆</td><td class="status-fix">🔧 今日修復</td><td>原本超過 200 字合成失敗；已改分段合成再串接</td></tr>
+    <tr><td>MP3 播放（ESP 喇叭）</td><td class="status-ok">✅ 就緒</td><td>I2S₀ 輸出、192KB PSRAM 解碼緩衝，接上功放即可驗證</td></tr>
+    <tr><td>馬達控制指令</td><td class="status-ok">✅ 就緒</td><td>G19/G20/G21/G47，馬達尚未接（之後裝車體時再接）</td></tr>
+    <tr><td>表情指令</td><td class="status-ok">— 預留</td><td>目前僅列印 log，無顯示硬體</td></tr>
+  </table></div>
+
+  <h2>如何用麵包板測試</h2>
+  <div class="panel">
+    <p><b>麵包板的連通規則</b>：中間區域每一橫排的 <span class="mono">a–e</span> 五孔彼此相通、<span class="mono">f–j</span> 五孔相通，中央溝槽兩側不相通；兩側長條的紅（＋）藍（－）電源軌是整條縱向相通。模組插上去之後，<b>同一排剩下的孔就是它那支腳的延長點</b>，杜邦線插旁邊的孔即可，不用擠同一個孔。</p>
+    <ul>
+      <li>把 ESP32 的 <span class="mono">5V</span> 接到紅軌、<span class="mono">GND</span> 接到藍軌，之後功放 Vin 從紅軌取電、所有 GND（含麥克風 L/R）都插藍軌——共地一次搞定。</li>
+      <li>⚠️ 麥克風的 3.3V <b>不要</b>從紅軌拿（紅軌是 5V）！用一條橘線直接從 ESP32 的 <span class="mono">3V3</span> 腳拉到麥克風那排。</li>
+      <li>部分麵包板電源軌中間有斷點（紅藍線中斷處），跨過去要加跳線。</li>
+    </ul>
+    <p><b>分階段點亮</b>（每一階段通過再進下一步，出問題馬上知道是哪段）：</p>
+    <ol class="steps">
+      <li><b>只接電源</b>：接好 5V/3V3/GND 就上電。摸兩塊模組不應發燙、ESP32 正常連線（網頁顯示機器人已連線）。有燙感立刻斷電查短路。</li>
+      <li><b>先測喇叭</b>（不用接麥克風）：接好功放三條訊號線＋喇叭，在網頁輸入文字或按網頁麥克風跟 AI 對話並勾選輸出到機器人——喇叭發出 TTS 語音即通過。沒聲音先查 DIN/BCLK/LRC 三條有沒有插錯排。</li>
+      <li><b>再測麥克風</b>：接好麥克風四條線（SD/WS/SCK＋L/R 接地），按住 BOOT 說一句話再放開。看後端 log（<span class="mono">localhost:3001/status</span>）出現收到 audio、Gemini 回覆即通過。若 AI 說聽不清楚，檢查 L/R 是否確實接地、SD 線是否插對排。</li>
+      <li><b>全鏈路</b>：按住 BOOT 提問 → 放開 → 喇叭回答。完成！</li>
+    </ol>
+    <p class="sub">常見麵包板陷阱：杜邦線沒插到底（半接觸最難查）、模組沒跨中央溝槽導致左右腳短路、訊號線超過 20cm 造成 I2S 雜訊。出現雜音先把線換短、重插一遍。</p>
+  </div>
+
+  <h2>接好之後的測試流程</h2>
+  <div class="panel">
+    <ol class="steps">
+      <li>ESP32 上電，等網頁狀態列顯示「機器人 已連線」。</li>
+      <li>網頁 <b>設定</b> 裡填入 <b>Gemini API Key</b>（後端重啟後要重新送出一次設定——重新整理網頁即可）。</li>
+      <li><b>按住 ESP32 板上的 BOOT 鍵說話</b>（最長 8 秒），放開後送出。</li>
+      <li>後端 log 應依序出現：收到音訊 → Gemini 回覆 → 送 TTS 到喇叭；喇叭播出回答就全通了。</li>
+      <li>對它說「往前走」「轉圈圈」可測 AI 呼叫馬達指令（Machine Ops 需開啟；馬達未接時看 log 確認即可）。</li>
+    </ol>
+    <p class="sub">提示：BOOT 鍵同時是燒錄鍵，若按住時重開機會進下載模式——正常使用（上電後才按）不受影響。錄音期間相機串流會自動暫停，屬正常行為。</p>
+  </div>
+</main>
