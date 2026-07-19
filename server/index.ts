@@ -53,6 +53,8 @@ interface ClientState {
 }
 
 const clients = new Map<WebSocket, ClientState>();
+// Most recent Gemini API key from any web client; used for robot audio requests.
+let lastGeminiApiKey = '';
 const serverLogs: Array<{ time: string; level: 'info' | 'warn' | 'error'; message: string }> = [];
 const MAX_SERVER_LOGS = 200;
 
@@ -267,12 +269,16 @@ function buildFirmwareCommand(functionName: string, args: any) {
 
 async function generateTTS(text: string): Promise<string> {
   try {
-    return await googleTTS.getAudioBase64(text, {
+    // getAllAudioBase64 splits text beyond the ~200-char Google TTS limit;
+    // concatenated MP3 segments remain playable as one stream.
+    const parts = await googleTTS.getAllAudioBase64(text, {
       lang: 'zh-TW',
       slow: false,
       host: 'https://translate.google.com',
       timeout: 10000,
     });
+    const merged = Buffer.concat(parts.map(p => Buffer.from(p.base64, 'base64')));
+    return merged.toString('base64');
   } catch (error) {
     console.error('TTS error', error);
     return '';
@@ -360,6 +366,9 @@ wss.on('connection', (ws) => {
       if (msg.type === 'config') {
         setClientRole(ws, 'web');
         state.geminiApiKey = String(msg.settings?.apiKey || '');
+        if (state.geminiApiKey) {
+          lastGeminiApiKey = state.geminiApiKey;
+        }
         state.ollamaEndpoint = String(msg.settings?.ollamaEndpoint || 'http://localhost:11434');
         state.enableMachineOps = Boolean(msg.settings?.enableMachineOps);
         recordLog('info', `Web config updated. Machine Ops: ${state.enableMachineOps}`);
@@ -404,6 +413,11 @@ wss.on('connection', (ws) => {
 
       sendJson(ws, { type: 'status', state: 'processing' });
 
+      // Robot connections never receive a config message, so fall back to the
+      // key most recently provided by any web client.
+      if (!state.geminiApiKey && lastGeminiApiKey) {
+        state.geminiApiKey = lastGeminiApiKey;
+      }
       if (!state.geminiApiKey) {
         sendJson(ws, { type: 'text', data: 'Please set the Gemini API Key in Settings first.' });
         sendJson(ws, { type: 'status', state: 'idle' });

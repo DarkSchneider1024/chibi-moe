@@ -693,17 +693,19 @@ void loop() {
           
           String base64Wav = base64Encode(wav_payload, total_payload_size);
           free(wav_payload);
-          
-          // Send to server
-          StaticJsonDocument<2048> doc;
-          doc["type"] = "audio";
-          doc["format"] = "wav";
-          doc["data"] = base64Wav;
-          
+
+          // Build JSON by hand: the ~340KB base64 payload cannot fit in any
+          // reasonable ArduinoJson pool (it silently serialized data as null).
           String jsonStr;
-          serializeJson(doc, jsonStr);
-          webSocket.sendTXT(jsonStr);
-          Serial.println("Audio packet sent successfully.");
+          jsonStr.reserve(base64Wav.length() + 64);
+          jsonStr = "{\"type\":\"audio\",\"format\":\"wav\",\"data\":\"";
+          jsonStr += base64Wav;
+          jsonStr += "\"}";
+          if (webSocket.sendTXT(jsonStr)) {
+            Serial.printf("Audio packet sent (%u bytes).\n", jsonStr.length());
+          } else {
+            Serial.println("Audio packet send FAILED.");
+          }
         } else {
           Serial.println("WAV serialization malloc failed!");
         }
