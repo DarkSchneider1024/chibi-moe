@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "author": "chibi-moe",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-s3-devkitc-1", "id": "esp", "top": 0, "left": 0 },
+    { "type": "wokwi-led", "id": "led_lf", "top": -90, "left": 300, "attrs": { "color": "green", "label": "左輪 前進 (G19)" } },
+    { "type": "wokwi-led", "id": "led_lb", "top": 10, "left": 300, "attrs": { "color": "red", "label": "左輪 後退 (G20)" } },
+    { "type": "wokwi-led", "id": "led_rf", "top": 110, "left": 300, "attrs": { "color": "green", "label": "右輪 前進 (G21)" } },
+    { "type": "wokwi-led", "id": "led_rb", "top": 210, "left": 300, "attrs": { "color": "red", "label": "右輪 後退 (G47)" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": -60, "left": 220, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": 40, "left": 220, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r3", "top": 140, "left": 220, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r4", "top": 240, "left": 220, "attrs": { "value": "220" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:19", "r1:1", "green", [] ],
+    [ "r1:2", "led_lf:A", "green", [] ],
+    [ "led_lf:C", "esp:GND.1", "black", [] ],
+    [ "esp:20", "r2:1", "orange", [] ],
+    [ "r2:2", "led_lb:A", "orange", [] ],
+    [ "led_lb:C", "esp:GND.1", "black", [] ],
+    [ "esp:21", "r3:1", "blue", [] ],
+    [ "r3:2", "led_rf:A", "blue", [] ],
+    [ "led_rf:C", "esp:GND.2", "black", [] ],
+    [ "esp:47", "r4:1", "purple", [] ],
+    [ "r4:2", "led_rb:A", "purple", [] ],
+    [ "led_rb:C", "esp:GND.2", "black", [] ]
+  ]
+}

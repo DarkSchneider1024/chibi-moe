@@ -139,8 +139,14 @@ const char* ISGR_ROOT_X1_CA = \
 "emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\n" \
 "-----END CERTIFICATE-----\n";
 
+#ifdef WOKWI_SIM
+// Wokwi VS Code extension resolves host.wokwi.internal to the host machine
+String websocket_host = "host.wokwi.internal";
+int websocket_port = 3001;
+#else
 String websocket_host = "chibi.carrot-atelier.online";
 int websocket_port = 443;
+#endif
 String websocket_path = "/";
 bool websocket_secure = true;
 bool shouldSaveConfig = false;
@@ -388,6 +394,10 @@ void saveConfig() {
 }
 
 void initCamera() {
+#ifdef WOKWI_SIM
+  Serial.println("WOKWI build: camera is not simulated; skipping init.");
+  return;
+#endif
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -583,6 +593,24 @@ void setup() {
   loadConfig();
   initMicrophone();
 
+#ifdef WOKWI_SIM
+  Serial.println("WOKWI build: joining Wokwi-GUEST virtual WiFi...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin("Wokwi-GUEST", "", 6);
+  unsigned long wokwi_wifi_start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - wokwi_wifi_start < 30000) {
+    delay(250);
+    Serial.print(".");
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("\nWokwi WiFi connect failed; restarting...");
+    delay(1000);
+    ESP.restart();
+  }
+  Serial.println("\nWiFi Connected!");
+  WiFi.setSleep(false);
+  normalizeWebSocketConfig();
+#else
   WiFiManager wifiManager;
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   // Retry harder before falling into the portal, and reboot out of the portal
@@ -619,10 +647,11 @@ void setup() {
     normalizeWebSocketConfig();
     saveConfig();
   } else {
-    websocket_host = custom_server_ip.getValue(); 
+    websocket_host = custom_server_ip.getValue();
     websocket_port = atoi(custom_server_port.getValue());
     normalizeWebSocketConfig();
   }
+#endif  // WOKWI_SIM
 
   waitForWebSocketDns();
   if (websocket_secure) {
