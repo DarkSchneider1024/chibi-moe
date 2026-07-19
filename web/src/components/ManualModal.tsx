@@ -112,11 +112,32 @@ export function ManualModal({ isOpen, onClose }: ManualModalProps) {
           </button>
         </div>
 
-        <div style={{ 
-          flex: 1, 
-          overflowY: 'auto', 
-          background: 'rgba(0,0,0,0.2)', 
-          padding: '16px', 
+        {activeTab === 'hardware' && (
+          <a
+            href="/docs/breadboard-audio-wiring.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'block',
+              margin: '0 0 10px',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              background: 'var(--accent-yellow, #f5c518)',
+              color: '#1a1a1a',
+              fontWeight: 700,
+              textDecoration: 'none',
+              textAlign: 'center',
+            }}
+          >
+            🔌 麥克風／喇叭麵包板接線圖解（互動圖，點我開新分頁）
+          </a>
+        )}
+
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          background: 'rgba(0,0,0,0.2)',
+          padding: '16px',
           borderRadius: '12px',
           color: 'var(--text-primary)',
           lineHeight: '1.6'
