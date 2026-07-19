@@ -327,8 +327,32 @@
         <circle cx="484" cy="408" r="4.5" fill="var(--w-gnd)"/><circle cx="460" cy="408" r="4.5" fill="var(--w-gnd)"/>
       </g>
 
+      <!-- region labels -->
+      <g font-family="'Segoe UI','Noto Sans TC',sans-serif" font-size="12" fill="var(--muted)" text-anchor="middle">
+        <text x="946" y="170" writing-mode="vertical-rl">上半區</text>
+        <text x="946" y="290" writing-mode="vertical-rl">下半區</text>
+      </g>
+
+      <!-- numbered wire badges (match the checklist) -->
+      <g font-family="'Segoe UI','Noto Sans TC',sans-serif" font-size="11" font-weight="700">
+        <circle cx="822" cy="272" r="11" fill="var(--w-5v)"/><text x="822" y="276" text-anchor="middle" fill="#fff">1</text>
+        <circle cx="809" cy="344" r="11" fill="var(--w-gnd)"/><text x="809" y="348" text-anchor="middle" fill="#fff">2</text>
+        <circle cx="484" cy="341" r="11" fill="var(--w-gnd)"/><text x="484" y="345" text-anchor="middle" fill="#fff">3</text>
+        <circle cx="452" cy="372" r="11" fill="var(--w-gnd)"/><text x="452" y="376" text-anchor="middle" fill="#fff">4</text>
+        <circle cx="352" cy="266" r="11" fill="var(--w-5v)"/><text x="352" y="270" text-anchor="middle" fill="#fff">5</text>
+        <circle cx="367" cy="345" r="11" fill="var(--w-gnd)"/><text x="367" y="349" text-anchor="middle" fill="#fff">6</text>
+        <circle cx="325" cy="209" r="11" fill="var(--w-33)"/><text x="325" y="213" text-anchor="middle" fill="#fff">7</text>
+        <circle cx="428" cy="154" r="11" fill="var(--w-sd)"/><text x="428" y="158" text-anchor="middle" fill="#fff">8</text>
+        <circle cx="394" cy="197" r="11" fill="var(--w-ws)"/><text x="394" y="201" text-anchor="middle" fill="#fff">9</text>
+        <circle cx="373" cy="241" r="11" fill="var(--w-sck)"/><text x="373" y="245" text-anchor="middle" fill="#fff">10</text>
+        <circle cx="557" cy="126" r="11" fill="var(--w-din)"/><text x="557" y="130" text-anchor="middle" fill="#fff">11</text>
+        <circle cx="598" cy="123" r="11" fill="var(--w-lrc)"/><text x="598" y="127" text-anchor="middle" fill="#fff">12</text>
+        <circle cx="447" cy="199" r="11" fill="var(--w-bclk)"/><text x="447" y="203" text-anchor="middle" fill="#fff">13</text>
+        <circle cx="820" cy="24" r="11" fill="var(--muted)"/><text x="820" y="28" text-anchor="middle" fill="#fff">14</text>
+      </g>
+
       <!-- callout: VDD direct to 3V3 -->
-      <text x="340" y="646" fill="var(--w-33)" font-size="13" font-weight="600" font-family="'Segoe UI','Noto Sans TC',sans-serif">▲ 橘線：麥克風 VDD 直接接 ESP32 的 3V3 腳，不可從 5V 紅軌取電！</text>
+      <text x="340" y="646" fill="var(--w-33)" font-size="13" font-weight="600" font-family="'Segoe UI','Noto Sans TC',sans-serif">▲ 橘線⑦：麥克風 VDD 直接接 ESP32 的 3V3 腳，不可從 5V 紅軌取電！</text>
     </svg>
     <div class="legend">
       <span><i class="chip" style="background:var(--w-5v)"></i>5V（紅軌）</span>
@@ -341,11 +365,28 @@
       <span><i class="chip" style="background:var(--w-lrc)"></i>LRC→G1</span>
       <span><i class="chip" style="background:var(--w-bclk)"></i>BCLK→G2</span>
     </div>
+    <p style="margin:14px 0 6px"><b>照編號順序接，一條一條來（模組先插好：麥克風跨溝槽插第 5–7 列、功放七腳插第 17–23 列）：</b></p>
+    <div class="tbl-wrap"><table>
+      <tr><th>順序</th><th>線材</th><th>顏色</th><th>這一端插…</th><th>另一端插…</th></tr>
+      <tr><td class="mono">①</td><td>公對公</td><td><i class="chip" style="background:var(--w-5v)"></i> 紅</td><td>第 <b>23</b> 列（功放 Vin 腳那列）空孔</td><td>紅軌（＋）任一孔</td></tr>
+      <tr><td class="mono">②</td><td>公對公</td><td><i class="chip" style="background:var(--w-gnd)"></i> 黑</td><td>第 <b>22</b> 列（功放 GND 腳那列）空孔</td><td>藍軌（－）任一孔</td></tr>
+      <tr><td class="mono">③</td><td>公對公</td><td><i class="chip" style="background:var(--w-gnd)"></i> 黑</td><td><b>下半區</b>第 <b>6</b> 列（麥克風 GND 腳那列）空孔</td><td>藍軌（－）任一孔</td></tr>
+      <tr><td class="mono">④</td><td>公對公</td><td><i class="chip" style="background:var(--w-gnd)"></i> 黑</td><td><b>下半區</b>第 <b>5</b> 列（麥克風 L/R 腳那列）空孔</td><td>藍軌（－）任一孔</td></tr>
+      <tr><td class="mono">⑤</td><td>公對母</td><td><i class="chip" style="background:var(--w-5v)"></i> 紅</td><td>公頭插紅軌（＋）任一孔</td><td>母頭套 ESP32 標 <b>5V</b> 的針</td></tr>
+      <tr><td class="mono">⑥</td><td>公對母</td><td><i class="chip" style="background:var(--w-gnd)"></i> 黑</td><td>公頭插藍軌（－）任一孔</td><td>母頭套 ESP32 標 <b>GND</b> 的針</td></tr>
+      <tr><td class="mono">⑦</td><td>公對母</td><td><i class="chip" style="background:var(--w-33)"></i> 橘</td><td>公頭插<b>下半區</b>第 <b>7</b> 列（麥克風 VDD 腳那列）空孔</td><td>母頭套 ESP32 標 <b>3V3</b> 的針（⚠️ 絕不接 5V）</td></tr>
+      <tr><td class="mono">⑧</td><td>公對母</td><td><i class="chip" style="background:var(--w-sd)"></i> 黃</td><td>公頭插<b>上半區</b>第 <b>7</b> 列（麥克風 SD 腳那列）空孔</td><td>母頭套 ESP32 標 <b>G39</b> 的針</td></tr>
+      <tr><td class="mono">⑨</td><td>公對母</td><td><i class="chip" style="background:var(--w-ws)"></i> 綠</td><td>公頭插<b>上半區</b>第 <b>6</b> 列（麥克風 WS 腳那列）空孔</td><td>母頭套 ESP32 標 <b>G40</b> 的針</td></tr>
+      <tr><td class="mono">⑩</td><td>公對母</td><td><i class="chip" style="background:var(--w-sck)"></i> 藍</td><td>公頭插<b>上半區</b>第 <b>5</b> 列（麥克風 SCK 腳那列）空孔</td><td>母頭套 ESP32 標 <b>G41</b> 的針</td></tr>
+      <tr><td class="mono">⑪</td><td>公對母</td><td><i class="chip" style="background:var(--w-din)"></i> 紫</td><td>公頭插第 <b>19</b> 列（功放 DIN 腳那列）空孔</td><td>母頭套 ESP32 標 <b>G42</b> 的針</td></tr>
+      <tr><td class="mono">⑫</td><td>公對母</td><td><i class="chip" style="background:var(--w-lrc)"></i> 白/粉</td><td>公頭插第 <b>17</b> 列（功放 LRC 腳那列）空孔</td><td>母頭套 ESP32 標 <b>G1</b> 的針</td></tr>
+      <tr><td class="mono">⑬</td><td>公對母</td><td><i class="chip" style="background:var(--w-bclk)"></i> 灰/青</td><td>公頭插第 <b>18</b> 列（功放 BCLK 腳那列）空孔</td><td>母頭套 ESP32 標 <b>G2</b> 的針</td></tr>
+      <tr><td class="mono">⑭</td><td>喇叭原線</td><td>—</td><td colspan="2">兩條喇叭線鎖進功放的<b>綠色螺絲端子</b>（一孔一條，正負反了不會壞）。GAIN、SD（第 20、21 列）什麼都不接。全部接完再插 USB 上電。</td></tr>
+    </table></div>
     <ul style="margin-top:12px">
-      <li><b>麥克風（第 5–7 列）跨中央溝槽插</b>：一邊三支腳在上半區、另一邊三支在下半區，兩排腳才不會短路。接線接在<b>同一列的空孔</b>（同列五孔相通）。</li>
-      <li><b>功放（第 17–23 列）七支腳插同一橫排</b>，每支腳佔一列；接線同樣插各腳同列的空孔。GAIN、SD（第 20、21 列）懸空不接。</li>
-      <li><b>圖中模組腳位順序是常見排列，實際請以你模組板上的絲印文字為準</b>——找到 VDD/SD/WS/SCK 等字樣後照顏色對應接到 ESP32 即可，位置差一兩列無妨，重點是「腳名對腳名」。</li>
-      <li>ESP32 板身較寬，不上麵包板，直接用<b>公對母杜邦線</b>從板上排針飛線過來。</li>
+      <li><b>「第 N 列空孔」= 模組那支腳插著的同一直排剩下的孔</b>——同一列五孔互通，插旁邊的孔就等於接到那支腳，不必擠同一個孔。</li>
+      <li>麥克風跨溝槽：三支腳在<b>上半區</b>、三支在<b>下半區</b>，圖上左緣有標示。接線前先看你模組的絲印，確認哪一面是 SCK/WS/SD、哪一面是 L/R/GND/VDD——若與圖相反，把上下對調照腳名接即可。</li>
+      <li>建議每接完一條就在表上打勾；顏色不必完全一樣，但強烈建議 <b>紅=電源、黑=地</b> 不要亂用。</li>
     </ul>
   </div>
 
